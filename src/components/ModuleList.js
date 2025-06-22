@@ -40,14 +40,12 @@ export default function ModuleList({ user, scores, setScores }) {
         staleTime: 1000 * 60 * 5,
     });
 
-
     useEffect(() => {
         cache.current.clearAll();
         if (listRef.current) {
             listRef.current.recomputeRowHeights();
         }
     }, [modules, hoveredIndex]);
-
 
     const rowRenderer = useCallback(
         ({ key, index, style, parent }) => {
@@ -62,30 +60,27 @@ export default function ModuleList({ user, scores, setScores }) {
                 >
                     {({ measure, registerChild }) => (
                         <div ref={registerChild} style={style}>
-                            {scores.map((score, index) => (
-                                <ModuleCard
-                                    key={score.module_id}
-                                    scoreId={score}
-                                    index={index}
-                                    user={user}
-                                    score={scores[score.module_id]}
-                                    setScores={setScores}
-                                    isHovered={hoveredIndex === index}
-                                    isVisible={visibleRows.has(index)}
-                                    onHoverStart={() => setHoveredIndex(index)}
-                                    onHoverEnd={() => setHoveredIndex(null)}
-                                    onHeightChange={measure}
-                                />
-                            ))}
+                            <ModuleCard
+                                key={module.id}
+                                module={module}
+                                index={index}
+                                user={user}
+                                score={scores[module.module_id]}
+                                setScores={setScores}
+                                isHovered={hoveredIndex === index}
+                                isVisible={visibleRows.has(index)}
+                                onHoverStart={() => setHoveredIndex(index)}
+                                onHoverEnd={() => setHoveredIndex(null)}
+                                onHeightChange={measure}
+                            />
                         </div>
                     )}
                 </CellMeasurer>
             );
         },
-        [modules, user, hoveredIndex, visibleRows]
+        [modules, user, scores, setScores, hoveredIndex, visibleRows]
     );
 
-    // Handle row visibility for animations
     const onRowsRendered = useCallback(
         ({ startIndex, stopIndex }) => {
             const newVisibleRows = new Set();

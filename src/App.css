@@ -296,3 +296,47 @@ select:focus {
     opacity: 1;
   }
 }
+
+.confidence-section {
+  min-width: 225px;
+  padding: 10px;
+}
+
+.confidence-icon {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 1px;
+  margin-right: 8px;
+}
+
+.confidence-label {
+  width: 50px;
+  font-weight: 500;
+  font-size: 0.7rem;
+  margin-top: 2px;
+  color: var(--text-primary);
+}
+
+.confidence-select {
+  width: 120px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.7rem;
+  border-radius: 0.375rem;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.confidence-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.25rem, var(--accent);
+}
+
+.confidence-select:hover {
+  border-color: var(--accent);
+}
+
+.login-text {
+  font-size: 0.9rem;
+  text-align: center;
+  color: var(--text-primary);
+}

@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 function ModuleCard({
     module,
@@ -12,34 +13,43 @@ function ModuleCard({
     onHoverEnd,
     onHeightChange,
 }) {
-    const [defuserConfidence, setDefuserConfidence] = useState(score?.defuser || 'Unknown');
-    const [expertConfidence, setExpertConfidence] = useState(score?.expert || 'Unknown');
+    const [defuserConfidence, setDefuserConfidence] = useState(score?.defuserConfidence || 'Unknown');
+    const [expertConfidence, setExpertConfidence] = useState(score?.expertConfidence || 'Unknown');
 
     const confidenceOptions = [
         'Unknown',
         'Attempted',
-        'Solved',
         'Confident',
-        'Extremely Confident',
         'Avoid',
     ];
 
+    const confidenceIcons = {
+        Unknown: '/icons/unknown.png',
+        Attempted: '/icons/attempted.png',
+        Confident: '/icons/confident.png',
+        Avoid: '/icons/avoid.png',
+    };
+
     const handleScoreChange = async (type, value) => {
         if (!user) return;
-        try {
-            setScores((prev) => ({
-                ...prev,
-                [module.module_id]: {
-                    ...prev[module.module_id],
-                    [type]: value,
-                },
-            }));
 
+        const prevScore = score || { defuserConfidence: 'Unknown', expertConfidence: 'Unknown' };
+        const newScore = {
+            ...prevScore,
+            [type === 'defuser' ? 'defuserConfidence' : 'expertConfidence']: value,
+        };
+
+        setScores((prev) => ({
+            ...prev,
+            [module.id]: newScore,
+        }));
+
+        try {
             await axios.post(
-                `http://localhost:5000/api/scores/${module.module_id}`,
+                `http://localhost:5000/scores/${module.module_id}`,
                 {
-                    defuserConfidence: type === 'defuser' ? value : score?.defuser || 'Unknown',
-                    expertConfidence: type === 'expert' ? value : score?.expert || 'Unknown',
+                    defuserConfidence: type === 'defuser' ? value : prevScore.defuserConfidence,
+                    expertConfidence: type === 'expert' ? value : prevScore.expertConfidence,
                 },
                 { withCredentials: true }
             );
@@ -47,9 +57,9 @@ function ModuleCard({
             console.error('Failed to update score:', error);
             setScores((prev) => ({
                 ...prev,
-                [module.module_id]: score,
+                [module.id]: prevScore,
             }));
-        };
+        }
     };
 
     const encodedModuleName = encodeURIComponent(module.icon_file_name);
@@ -60,7 +70,6 @@ function ModuleCard({
         ? new Date(module.published).toISOString().split("T")[0]
         : "N/A";
 
-    // Trigger measurement when hover state changes
     useEffect(() => {
         if (onHeightChange) {
             onHeightChange();
@@ -99,12 +108,22 @@ function ModuleCard({
                     </div>
                 </div>
             </div>
-            <div className="confidence-section d-flex flex-column gap-2">
+            <div className="confidence-section d-flex flex-column gap-3 justify-content-center">
                 {user ? (
                     <>
-                        <div>
-                            <label>Defuser Confidence: </label>
+                        <div className="d-flex align-items-center">
+                            <img
+                                src={confidenceIcons[defuserConfidence]}
+                                alt={`${defuserConfidence} icon`}
+                                className="confidence-icon"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/icons/fallback-icon.png';
+                                }}
+                            />
+                            <label className="confidence-label me-2">Defuser:</label>
                             <select
+                                className="confidence-select"
                                 value={defuserConfidence}
                                 onChange={(e) => {
                                     setDefuserConfidence(e.target.value);
@@ -118,9 +137,19 @@ function ModuleCard({
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label>Expert Confidence: </label>
+                        <div className="d-flex align-items-center">
+                            <img
+                                src={confidenceIcons[expertConfidence]}
+                                alt={`${expertConfidence} icon`}
+                                className="confidence-icon"
+                                onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = '/icons/fallback-icon.png';
+                                }}
+                            />
+                            <label className="confidence-label me-2">Expert:</label>
                             <select
+                                className="confidence-select"
                                 value={expertConfidence}
                                 onChange={(e) => {
                                     setExpertConfidence(e.target.value);
@@ -136,7 +165,7 @@ function ModuleCard({
                         </div>
                     </>
                 ) : (
-                    <span className="confidence italic login-text">
+                    <span className="confidence italic login-text text-center">
                         Log in to view and edit confidence scores
                     </span>
                 )}
