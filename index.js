@@ -77,7 +77,7 @@ app.get("/modules", async (req, res) => {
     }
   });
   
-  app.get("/api/scores", authMiddleware, async (req, res) => {
+  app.get("/scores", authMiddleware, async (req, res) => {
     try {
       const userId = req.user.discord_id;
       const scores = await pool.query(
@@ -91,7 +91,7 @@ app.get("/modules", async (req, res) => {
     }
   });
   
-  app.post("/api/scores/:moduleId", authMiddleware, async (req, res) => {
+  app.post("/scores/:moduleId", authMiddleware, async (req, res) => {
     try {
       const { moduleId } = req.params;
       const { defuserConfidence, expertConfidence } = req.body;

@@ -2,7 +2,7 @@ import { exec } from "child_process";
 
 export function updateGitSubmodule() {
   return new Promise((resolve, reject) => {
-    exec("git submodule update --remote --merge", (err, stdout, stderr) => {
+    exec("git submodule update --init --recursive --force", (err, stdout, stderr) => {
       if (err) {
         console.error("Git submodule update error:", err);
         reject(err);
