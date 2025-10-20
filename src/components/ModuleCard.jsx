@@ -1,176 +1,208 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import axios from "axios";
+import { bossToColor, confidenceIcons, confidenceOptions } from "../utility";
+import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl, InputLabel, Link, Chip, Grid, Checkbox, FormControlLabel } from "@mui/material";
 
 function ModuleCard({
     module,
     index,
     user,
+    authUser,
     score,
     setScores,
-    isHovered,
-    isVisible,
-    onHoverStart,
-    onHoverEnd,
-    onHeightChange,
+    refetchScores,
 }) {
-    const [defuserConfidence, setDefuserConfidence] = useState(score?.defuserConfidence || 'Unknown');
-    const [expertConfidence, setExpertConfidence] = useState(score?.expertConfidence || 'Unknown');
-
-    const confidenceOptions = [
-        'Unknown',
-        'Attempted',
-        'Confident',
-        'Avoid',
-    ];
-
-    const confidenceIcons = {
-        Unknown: '/icons/unknown.png',
-        Attempted: '/icons/attempted.png',
-        Confident: '/icons/confident.png',
-        Avoid: '/icons/avoid.png',
-    };
-
     const handleScoreChange = async (type, value) => {
         if (!user) return;
-
-        const prevScore = score || { defuserConfidence: 'Unknown', expertConfidence: 'Unknown' };
-        const newScore = {
-            ...prevScore,
-            [type === 'defuser' ? 'defuserConfidence' : 'expertConfidence']: value,
-        };
-
+        const prevScore = score || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
+        let newScore = { ...prevScore };
+        if (type === "defuser") {
+            newScore.defuserConfidence = value;
+        } else if (type === "expert") {
+            newScore.expertConfidence = value;
+        } else if (type === "solo") {
+            newScore.canSolo = value;
+        }
         setScores((prev) => ({
             ...prev,
-            [module.id]: newScore,
+            [module.module_id]: newScore,
         }));
-
         try {
-            await axios.post(
-                `http://localhost:5000/scores/${module.module_id}`,
+            await axios.put(
+                `http://${window.location.hostname}:5000/scores/${module.module_id}`,
                 {
-                    defuserConfidence: type === 'defuser' ? value : prevScore.defuserConfidence,
-                    expertConfidence: type === 'expert' ? value : prevScore.expertConfidence,
+                    defuserConfidence: newScore.defuserConfidence,
+                    expertConfidence: newScore.expertConfidence,
+                    canSolo: newScore.canSolo,
                 },
                 { withCredentials: true }
-            );
+            ).then(response => console.log('Update successful:', response.data));
+            if (refetchScores) refetchScores();
         } catch (error) {
-            console.error('Failed to update score:', error);
+            console.error("Failed to update score:", error);
             setScores((prev) => ({
                 ...prev,
-                [module.id]: prevScore,
+                [module.module_id]: prevScore,
             }));
         }
     };
 
     const encodedModuleName = encodeURIComponent(module.icon_file_name);
     const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
-    const manualUrl = `https://ktane.timwi.de/HTML/${encodedModuleName}.html`;
-
+    const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
     const formattedDate = module.published
         ? new Date(module.published).toISOString().split("T")[0]
         : "N/A";
 
-    useEffect(() => {
-        if (onHeightChange) {
-            onHeightChange();
-        }
-    }, [isHovered, onHeightChange]);
-
     return (
-        <div
-            className={`list-item d-flex justify-content-between align-items-center ${isHovered ? 'hovered' : ''} ${isVisible ? 'visible' : ''}`}
-            onMouseEnter={onHoverStart}
-            onMouseLeave={onHoverEnd}
+        <Card
+            sx={{
+                '&:hover': {
+                    backgroundColor: 'action.hover',
+                    boxShadow: 6,
+                },
+                transition: 'background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+            }}
         >
-            <div className="d-flex align-items-center">
-                <img
-                    src={imageUrl}
-                    alt={module.name}
-                    className="module-icon"
-                    onError={(e) => {
-                        console.error(module.name, e);
-                        e.target.onerror = null;
-                        e.target.src = '/fallback-img.png';
-                    }}
-                />
-                <div>
-                    <a className="link" href={manualUrl}>
-                        <h3>{module.name}</h3>
-                    </a>
-                    <div className="description-container">
-                        <p className="description">{module.description}</p>
-                    </div>
-                    <div className="module-details">
-                        <span>Authors: {module.developers?.join(', ') || 'Unknown'}</span>
-                        <span>Published: {formattedDate}</span>
-                        <span>Defuser: {module.defuser_difficulty || 'N/A'}</span>
-                        <span>Expert: {module.expert_difficulty || 'N/A'}</span>
-                    </div>
-                </div>
-            </div>
-            <div className="confidence-section d-flex flex-column gap-3 justify-content-center">
-                {user ? (
-                    <>
-                        <div className="d-flex align-items-center">
-                            <img
-                                src={confidenceIcons[defuserConfidence]}
-                                alt={`${defuserConfidence} icon`}
-                                className="confidence-icon"
+            <CardContent>
+                <Grid container spacing={2}>
+                    <Grid item size={9} xs={12} md={9}>
+                        <Box display="flex" alignItems="center">
+                            <Box
+                                component="img"
+                                src={imageUrl}
+                                alt={module.name}
+                                width={48}
+                                height={48}
                                 onError={(e) => {
                                     e.target.onerror = null;
-                                    e.target.src = '/icons/fallback-icon.png';
+                                    e.target.src = "/fallback-img.png";
                                 }}
                             />
-                            <label className="confidence-label me-2">Defuser:</label>
-                            <select
-                                className="confidence-select"
-                                value={defuserConfidence}
-                                onChange={(e) => {
-                                    setDefuserConfidence(e.target.value);
-                                    handleScoreChange('defuser', e.target.value);
-                                }}
-                            >
-                                {confidenceOptions.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="d-flex align-items-center">
-                            <img
-                                src={confidenceIcons[expertConfidence]}
-                                alt={`${expertConfidence} icon`}
-                                className="confidence-icon"
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = '/icons/fallback-icon.png';
-                                }}
-                            />
-                            <label className="confidence-label me-2">Expert:</label>
-                            <select
-                                className="confidence-select"
-                                value={expertConfidence}
-                                onChange={(e) => {
-                                    setExpertConfidence(e.target.value);
-                                    handleScoreChange('expert', e.target.value);
-                                }}
-                            >
-                                {confidenceOptions.map((option) => (
-                                    <option key={option} value={option}>
-                                        {option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </>
-                ) : (
-                    <span className="confidence italic login-text text-center">
-                        Log in to view and edit confidence scores
-                    </span>
-                )}
-            </div>
-        </div>
+                            <Box ml={2}>
+                                <Link href={manualUrl}>
+                                    <Typography variant="h6">{module.name}</Typography>
+                                </Link>
+                                <Typography variant="body2">{module.description}</Typography>
+                                <Box
+                                    id="chips"
+                                    display="flex"
+                                    flexWrap="wrap"
+                                    gap={1}
+                                    mt={1}
+                                >
+                                    <Chip label={`Authors: ${module.developers?.join(", ") || "Unknown"}`} size="small" />
+                                    <Chip label={`Published: ${formattedDate}`} size="small" />
+                                    <Chip label={`Defuser: ${module.defuser_difficulty || "N/A"}`} size="small" />
+                                    <Chip label={`Expert: ${module.expert_difficulty || "N/A"}`} size="small" />
+                                    {module.type !== "Regular" && (
+                                        <Chip label={`${module.type}`} size="small" style={{ backgroundColor: "#4444aa" }} />
+                                    )}
+                                    {module.boss_status && (
+                                        <Chip label={`${module.boss_status}`} size="small" style={{ backgroundColor: bossToColor(module.boss_status) }} />
+                                    )}
+                                </Box>
+                            </Box>
+                        </Box>
+                    </Grid>
+
+                    <Grid size={3} item>
+                        <Box display="flex"
+                            flexDirection="column"
+                            justifyContent="center"
+                            alignItems="center"
+                            height="100%">
+                            {user ? (
+                                <Box display="flex" flexDirection="row" alignItems="center">
+                                    <Box ml={10} display="flex" alignItems="center">
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+
+                                                    checked={score?.canSolo || false}
+                                                    onChange={(e) => handleScoreChange("solo", e.target.checked)}
+                                                    disabled={!authUser || authUser.id !== user.id}
+                                                />
+                                            }
+                                            label="Can Solo"
+                                            labelPlacement="top"
+                                            sx={{ m: 0 }}
+                                        />
+                                    </Box>
+                                    <Box flex={1} display="flex" flexDirection="column" ml={5}>
+                                        <Box sx={{ width: '100%' }} display="flex" justifyContent="flex-end" alignItems="center">
+                                            <Box component="img"
+                                                width={25} height={25}
+                                                src={confidenceIcons[score?.defuserConfidence || "Unknown"]}
+                                                alt={score?.defuserConfidence || "Unknown"} />
+                                            <FormControl
+                                                sx={{ m: 1, minWidth: 120 }}
+                                                size="small"
+                                            >
+                                                <InputLabel id="defuser-conf-label">Defuser</InputLabel>
+                                                <Select
+                                                    labelId="defuser-conf-label"
+                                                    label="Defuser"
+                                                    value={score?.defuserConfidence || "Unknown"}
+                                                    disabled={!authUser || authUser.id !== user.id}
+                                                    onChange={(e) => {
+                                                        console.log("Defuser Select Changed:", e.target.value);
+                                                        handleScoreChange("defuser", e.target.value);
+                                                    }}
+                                                    displayEmpty
+                                                    sx={{
+                                                        width: (theme) => theme.typography.fontSize * 11,
+                                                    }}
+                                                >
+                                                    {confidenceOptions.map((option) => (
+                                                        <MenuItem key={option} value={option}>
+                                                            {option}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Box>
+                                        <Box sx={{ width: '100%' }} display="flex" justifyContent="flex-end" alignItems="center">
+                                            <Box component="img"
+                                                width={25} height={25}
+                                                src={confidenceIcons[score?.expertConfidence || "Unknown"]}
+                                                alt={score?.expertConfidence || "Unknown"} />
+                                            <FormControl
+                                                sx={{ m: 1, minWidth: 120 }}
+                                                size="small"
+                                            >
+                                                <InputLabel id="expert-conf-label">Expert</InputLabel>
+                                                <Select
+                                                    labelId="expert-conf-label"
+                                                    label="Expert"
+                                                    disabled={!authUser || authUser.id !== user.id}
+                                                    value={score?.expertConfidence || "Unknown"}
+                                                    onChange={(e) => handleScoreChange("expert", e.target.value)}
+                                                    displayEmpty
+                                                    sx={{
+                                                        width: (theme) => theme.typography.fontSize * 11,
+                                                    }}
+                                                >
+                                                    {confidenceOptions.map((option) => (
+                                                        <MenuItem key={option} value={option}>
+                                                            {option}
+                                                        </MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            ) : (
+                                <Typography variant="body2" align="center" fontStyle="italic">
+                                    Log in to view and edit confidence scores
+                                </Typography>
+                            )}
+                        </Box>
+                    </Grid>
+                </Grid>
+            </CardContent>
+        </Card>
     );
 }
 
