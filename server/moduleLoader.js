@@ -7,8 +7,8 @@ import { updateGitSubmodule } from "./gitUpdater.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const jsonDir = join(__dirname, "KtaneContent", "JSON");
-const iconDir = join(__dirname, "KtaneContent", "Icons");
+const jsonDir = join(__dirname, "..", "KtaneContent", "JSON");
+const iconDir = join(__dirname, "..", "KtaneContent", "Icons");
 
 function getJsonFiles() {
     if (!fs.existsSync(jsonDir)) {

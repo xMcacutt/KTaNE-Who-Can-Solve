@@ -5,7 +5,7 @@ import pool from "./db.js";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve('F:/KTaNE-CanSolve/can-solve-ktane/server/.env') });
+dotenv.config({ path: path.resolve('./.env') });
 
 const router = express.Router();
 
