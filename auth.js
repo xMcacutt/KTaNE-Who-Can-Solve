@@ -9,13 +9,6 @@ dotenv.config({ path: path.resolve('F:/KTaNE-CanSolve/can-solve-ktane/server/.en
 
 const router = express.Router();
 
-console.log('Environment Variables:');
-console.log('CLIENT_ID:', process.env.CLIENT_ID ? 'Set' : 'Missing');
-console.log('CLIENT_SECRET:', process.env.CLIENT_SECRET ? 'Set' : 'Missing');
-console.log('CALLBACK_URL:', process.env.CALLBACK_URL ? 'Set' : 'Missing');
-console.log('FRONTEND_URL:', process.env.FRONTEND_URL ? 'Set' : 'Missing');
-console.log('SESSION_SECRET:', process.env.SESSION_SECRET ? 'Set' : 'Missing');
-
 if (!process.env.CLIENT_ID || !process.env.CLIENT_SECRET || !process.env.CALLBACK_URL) {
     const missingVars = [];
     if (!process.env.CLIENT_ID) missingVars.push('CLIENT_ID');
@@ -28,22 +21,22 @@ passport.use(new DiscordStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: process.env.CALLBACK_URL,
-    scope: ['identify', 'email', 'connections'],
+    scope: ['identify', 'connections'],
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         const result = await pool.query('SELECT * FROM users WHERE discord_id = $1', [profile.id]);
         let user;
 
-        if (result.rows.length > 0) {
+       if (result.rows.length > 0) {
             user = result.rows[0];
             await pool.query(
-                'UPDATE users SET username = $1, email = $2 WHERE discord_id = $3',
-                [profile.username, profile.email, profile.id]
+                'UPDATE users SET username = $1, avatar = $2 WHERE discord_id = $3',
+                [profile.username, profile.avatar, profile.id]
             );
         } else {
             const newUser = await pool.query(
-                'INSERT INTO users (discord_id, username, email) VALUES ($1, $2, $3) RETURNING *',
-                [profile.id, profile.username, profile.email]
+                'INSERT INTO users (discord_id, username, avatar) VALUES ($1, $2, $3) RETURNING *',
+                [profile.id, profile.username, profile.avatar]
             );
             user = newUser.rows[0];
         }
@@ -74,10 +67,20 @@ router.get('/user', (req, res) => {
     }
 });
 
-router.get('/logout', (req, res) => {
+router.get('/logout', (req, res, next) => {
     req.logout((err) => {
-        if (err) return res.status(500).json({ message: 'Logout failed' });
-        res.redirect(process.env.FRONTEND_URL);
+        if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).json({ error: 'Logout failed' });
+        }
+        req.session.destroy((err) => {
+            if (err) {
+                console.error('Session destroy error:', err);
+                return res.status(500).json({ error: 'Session destroy failed' });
+            }
+            res.clearCookie('connect.sid', { path: '/' });
+            res.status(200).json({ message: 'Logged out' });
+        });
     });
 });
 
