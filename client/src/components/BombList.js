@@ -43,7 +43,7 @@ export default function BombList() {
           discordId: authUser ? authUser.id : null,
         })
 
-      const res = await fetch(`/missions?${params.toString()}`, {
+      const res = await fetch(`/api/missions?${params.toString()}`, {
         method: "POST",
         headers: body ? { "Content-Type": "application/json" } : {},
         body,
@@ -69,7 +69,7 @@ export default function BombList() {
   const { data: authScores = [] } = useQuery({
     queryKey: ["userScores", authUser?.id],
     queryFn: async () => {
-      const res = await fetch(`/users/${authUser.id}/scores`);
+      const res = await fetch(`/api/users/${authUser.id}/scores`);
       if (!res.ok) throw new Error("Failed to fetch scores");
       return res.json();
     },
