@@ -34,17 +34,23 @@ export default function BombList() {
     queryKey: ["missions", debouncedSearchTerm, sort, order, activeUsers],
     queryFn: async () => {
       const params = new URLSearchParams({ search: debouncedSearchTerm, sort, order });
-      const body =
-        JSON.stringify({
-          team: (activeUsers && sort === "known_modules") ? activeUsers.map((u) => ({
-            id: u.id,
-            isDefuser: u.isDefuser,
-          })) : null,
-          discordId: authUser ? authUser.id : null,
-        })
+      let body = null;
+      let method = 'GET';
+      const teamData = (activeUsers && sort === "known_modules") ? activeUsers.map((u) => ({
+        id: u.id,
+        isDefuser: u.isDefuser,
+      })) : null;
+      const discordId = authUser ? authUser.id : null;
+
+      if (teamData) {
+        method = 'POST';
+        body = JSON.stringify({ team: teamData, discordId });
+      } else if (discordId) {
+        params.append('discordId', discordId);
+      }
 
       const res = await fetch(`/api/missions?${params.toString()}`, {
-        method: "POST",
+        method,
         headers: body ? { "Content-Type": "application/json" } : {},
         body,
       });
@@ -69,7 +75,7 @@ export default function BombList() {
   const { data: authScores = [] } = useQuery({
     queryKey: ["userScores", authUser?.id],
     queryFn: async () => {
-      const res = await fetch(`/api/users/${authUser.id}/scores`);
+      const res = await fetch(`/users/${authUser.id}/scores`);
       if (!res.ok) throw new Error("Failed to fetch scores");
       return res.json();
     },
