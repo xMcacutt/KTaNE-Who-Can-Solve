@@ -16,7 +16,7 @@ export default function Practice() {
 
     const handleGenerate = async () => {
         try {
-            const res = await axios.post(`http://${window.location.hostname}:5000/practice/generate`, {
+            const res = await axios.post(`/api/practice/generate`, {
                 bombSize,
                 difficulty,
                 prioritizeOlder

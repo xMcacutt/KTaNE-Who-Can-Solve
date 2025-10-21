@@ -33,7 +33,7 @@ function BombCard({
 
         try {
             await axios.put(
-                `http://${window.location.hostname}:5000/users/${authUser.id}/${mission.id}/favourites`,
+                `/api/users/${authUser.id}/${mission.id}/favourites`,
                 { isFavourite: newFavourite },
                 { withCredentials: true }
             );

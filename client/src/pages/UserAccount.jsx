@@ -75,7 +75,7 @@ function UserAccount() {
     } = useQuery({
         queryKey: ["profileUser", profileId],
         queryFn: async () => {
-            const res = await fetch(`http://${window.location.hostname}:5000/users/${profileId}`, {
+            const res = await fetch(`/api/users/${profileId}`, {
                 credentials: "include",
             });
             if (!res.ok) throw new Error("User does not exist");
@@ -94,7 +94,7 @@ function UserAccount() {
     } = useQuery({
         queryKey: ["profileScores", profileId],
         queryFn: async () => {
-            const res = await fetch(`http://${window.location.hostname}:5000/users/${profileId}/scores`, {
+            const res = await fetch(`/api/users/${profileId}/scores`, {
                 credentials: "include",
             });
             if (!res.ok) throw new Error("Failed to fetch profile scores");
@@ -109,7 +109,7 @@ function UserAccount() {
     const { data: modules = [], isLoading: modulesLoading } = useQuery({
         queryKey: ["modules"],
         queryFn: async () => {
-            const res = await fetch(`http://${window.location.hostname}:5000/modules`, { credentials: "include" });
+            const res = await fetch(`/api/modules`, { credentials: "include" });
             if (!res.ok) throw new Error("Failed to fetch modules");
             return res.json();
         },
@@ -124,7 +124,7 @@ function UserAccount() {
         if (window.confirm("Are you sure you want to delete all your data? This cannot be undone.")) {
             try {
                 logout();
-                const res = await axios.delete(`http://${window.location.hostname}:5000/users/${authUser.id}/delete`, { withCredentials: true });
+                const res = await axios.delete(`/api/users/${authUser.id}/delete`, { withCredentials: true });
                 alert(res.data.message);
             } catch (error) {
                 console.error("Failed to delete account:", error);
@@ -195,7 +195,7 @@ function UserAccount() {
             formData.append("role", role);
 
             const res = await axios.post(
-                `http://${window.location.hostname}:5000/scores/upload`,
+                `/api/scores/upload`,
                 formData,
                 {
                     withCredentials: true,

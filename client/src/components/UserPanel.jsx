@@ -39,7 +39,7 @@ export default function UserPanel({
     }
     setLoading(true);
     try {
-      const res = await fetch(`http://${window.location.hostname}:5000/leaderboard?search=${encodeURIComponent(value)}`);
+      const res = await fetch(`/api/leaderboard?search=${encodeURIComponent(value)}`);
       const data = await res.json();
       setResults(data);
     } catch (err) {

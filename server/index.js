@@ -15,11 +15,21 @@ import ogMetaRouter from "./routes/ogMeta.js";
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve('F:/KTaNE-CanSolve/can-solve-ktane/server/.env') });
+dotenv.config({ path: path.resolve('.env') });
 
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'];
 const app = express();
 
-app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (allowedOrigins.includes(origin) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Invalid origin'));
+    }
+  },
+  credentials: true
+}));
 app.use(json());
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -47,7 +57,6 @@ app.use("/profile", ogMetaRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`Listening on http://localhost:${PORT}`);
   refreshModules();
   refreshBombs();
   setInterval(refreshModules, 1800000);

@@ -43,7 +43,7 @@ export default function UserList() {
     queryKey: ["users", debouncedSearchTerm, sortType],
     queryFn: async () => {
       const res = await fetch(
-        `http://${window.location.hostname}:5000/leaderboard?search=${encodeURIComponent(
+        `/api/leaderboard?search=${encodeURIComponent(
           debouncedSearchTerm
         )}&sort=${sortType}`,
         { credentials: "include" }

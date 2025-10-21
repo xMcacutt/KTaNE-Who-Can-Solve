@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
     queryKey: ["authUser"],
     queryFn: async () => {
       const res = await axios.get(
-        `http://${window.location.hostname}:5000/auth/user`,
+        `/api/auth/user`,
         { withCredentials: true }
       );
       const data = res.data;
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
     queryKey: ["authScores", authUser?.id],
     queryFn: async () => {
       const res = await axios.get(
-        `http://${window.location.hostname}:5000/scores`,
+        `/api/scores`,
         { withCredentials: true }
       );
       return res.data.reduce(
@@ -63,12 +63,12 @@ export function AuthProvider({ children }) {
   });
 
   const handleLogin = () => {
-    window.location.href = `http://${window.location.hostname}:5000/auth/discord`;
+    window.location.href = `/api/auth/discord`;
   };
 
   const handleLogout = async () => {
     try {
-      await axios.get(`http://${window.location.hostname}:5000/auth/logout`, {
+      await axios.get(`/api/auth/logout`, {
         withCredentials: true,
       });
 

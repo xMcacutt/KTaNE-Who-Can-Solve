@@ -29,7 +29,7 @@ function ModuleCard({
         }));
         try {
             await axios.put(
-                `http://${window.location.hostname}:5000/scores/${module.module_id}`,
+                `/api/scores/${module.module_id}`,
                 {
                     defuserConfidence: newScore.defuserConfidence,
                     expertConfidence: newScore.expertConfidence,

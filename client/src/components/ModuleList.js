@@ -50,7 +50,7 @@ export default function ModuleList() {
     const { data: userScores } = useQuery({
         queryKey: ['scores', authUser?.id],
         queryFn: async () => {
-            const res = await fetch(`http://${window.location.hostname}:5000/scores`, {
+            const res = await fetch(`/api/scores`, {
                 credentials: 'include',
             });
             if (!res.ok) throw new Error('Failed to fetch scores');
@@ -118,7 +118,7 @@ export default function ModuleList() {
             const difficultyParam = difficultyFilter.length === fullDifficultyOptions.length ? 'All' : difficultyFilter.join(',');
             if (difficultyParam && difficultyParam !== 'All') params.append("difficultyFilter", difficultyParam);
             const res = await fetch(
-                `http://${window.location.hostname}:5000/modules?${params.toString()}`
+                `/api/modules?${params.toString()}`
             );
             if (!res.ok) throw new Error("Failed to fetch modules");
             return res.json();
