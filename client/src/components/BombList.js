@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { IconButton, Box, MenuItem, Select, InputLabel, FormControl, Typography, TextField, CircularProgress, Alert } from "@mui/material";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useQuery } from "@tanstack/react-query";
@@ -30,23 +30,27 @@ export default function BombList() {
 
   const { activeUsers, setActiveUsers, addUser, removeUser, setDefuser } = useActiveUsers();
 
+  const teamKey = useMemo(() => {
+    return activeUsers.map((u) => ({
+      id: u.id,
+      isDefuser: u.isDefuser,
+    }));
+  }, [activeUsers]);
+
   const { data: missions = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["missions", debouncedSearchTerm, sort, order, activeUsers],
+    queryKey: ["missions", debouncedSearchTerm, sort, order, teamKey],
     queryFn: async () => {
       const params = new URLSearchParams({ search: debouncedSearchTerm, sort, order });
       let body = null;
-      let method = 'GET';
-      const teamData = (activeUsers && sort === "known_modules") ? activeUsers.map((u) => ({
-        id: u.id,
-        isDefuser: u.isDefuser,
-      })) : null;
+      let method = "GET";
+      const teamData = sort === "known_modules" ? teamKey : null;
       const discordId = authUser ? authUser.id : null;
 
-      if (teamData) {
-        method = 'POST';
+      if (teamData.length > 0) {
+        method = "POST";
         body = JSON.stringify({ team: teamData, discordId });
       } else if (discordId) {
-        params.append('discordId', discordId);
+        params.append("discordId", discordId);
       }
 
       const res = await fetch(`/api/missions?${params.toString()}`, {
@@ -88,10 +92,25 @@ export default function BombList() {
     setActiveUsers((prev) => {
       const exists = prev.find((u) => u.id === authUser.id);
       const currentDefuser = prev.find((u) => u.isDefuser);
-      const userWithScores = { ...authUser, scores: authScores, isDefuser: currentDefuser ? exists?.isDefuser ?? false : true, };
+      const userWithScores = {
+        ...authUser,
+        scores: authScores,
+        isDefuser: currentDefuser
+          ? exists?.isDefuser ?? false
+          : true,
+      };
+
+      const same =
+        exists &&
+        JSON.stringify(exists.scores) === JSON.stringify(authScores) &&
+        exists.isDefuser === userWithScores.isDefuser;
+
+      if (same) return prev;
 
       if (exists) {
-        return prev.map((u) => (u.id === authUser.id ? userWithScores : u));
+        return prev.map((u) =>
+          u.id === authUser.id ? userWithScores : u
+        );
       } else {
         return [...prev, userWithScores];
       }
