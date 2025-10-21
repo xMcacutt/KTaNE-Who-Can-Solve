@@ -16,7 +16,7 @@ function BombCard({
     authUser,
 }) {
     const missionPageUrl = {
-        pathname: `/missions/${encodeURIComponent(mission.mission_name)}`,
+        pathname: `/api/missions/${encodeURIComponent(mission.mission_name)}`,
         state: { mission, users },
     };
     const [isFavourite, setIsFavourite] = useState(mission.is_favourite);
@@ -62,7 +62,7 @@ function BombCard({
                 console.warn('No module names to fetch');
                 return {};
             }
-            const res = await fetch('/modules/bulk', {
+            const res = await fetch('/api/modules/bulk', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
