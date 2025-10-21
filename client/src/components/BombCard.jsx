@@ -16,7 +16,7 @@ function BombCard({
     authUser,
 }) {
     const missionPageUrl = {
-        pathname: `/api/missions/${encodeURIComponent(mission.mission_name)}`,
+        pathname: `/missions/${encodeURIComponent(mission.mission_name)}`,
         state: { mission, users },
     };
     const [isFavourite, setIsFavourite] = useState(mission.is_favourite);
