@@ -249,7 +249,7 @@ function BombView({ bomb, viewStyle, filter, users }) {
                 return {};
             }
             console.log('Fetching modules for names:', allModuleIds);
-            const res = await fetch('/modules/bulk', {
+            const res = await fetch('/api/modules/bulk', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -518,10 +518,10 @@ export default function MissionPage() {
         setLoaded(true);
         const ids = usersParam.split(',');
         Promise.all(ids.map(async (id) => {
-            const resUser = await fetch(`/users/${id}`);
+            const resUser = await fetch(`/api/users/${id}`);
             if (!resUser.ok) throw new Error(`Failed to fetch user ${id}`);
             const userData = await resUser.json();
-            const resScores = await fetch(`/users/${id}/scores`);
+            const resScores = await fetch(`/api/users/${id}/scores`);
             if (!resScores.ok) throw new Error(`Failed to fetch scores for ${id}`);
             const scores = await resScores.json();
             return { ...userData, scores: Array.isArray(scores) ? scores : [], isDefuser: false };
@@ -538,7 +538,7 @@ export default function MissionPage() {
     const { data: mission, isLoading, error } = useQuery({
         queryKey: ['mission', missionName],
         queryFn: async () => {
-            const res = await fetch(`/missions/${encodeURIComponent(missionName)}`);
+            const res = await fetch(`/api/missions/${encodeURIComponent(missionName)}`);
             if (!res.ok) throw new Error('Failed to fetch mission');
             return res.json();
         },
