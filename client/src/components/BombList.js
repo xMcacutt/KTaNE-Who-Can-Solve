@@ -46,7 +46,7 @@ export default function BombList() {
       const teamData = sort === "known_modules" ? teamKey : null;
       const discordId = authUser ? authUser.id : null;
 
-      if (teamData.length > 0) {
+      if (teamData && teamData.length > 0) {
         method = "POST";
         body = JSON.stringify({ team: teamData, discordId });
       } else if (discordId) {
