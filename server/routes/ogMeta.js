@@ -42,10 +42,10 @@ router.get("/:id", async (req, res) => {
         <!DOCTYPE html>
         <html lang="en">
           <head>
-            <meta property="og:title" content="${user.name}'s KTANE Stats" />
+            <meta property="og:title" content="${user.name}'s stats" />
             <meta property="og:description" content="Defuser: ${defuserConfident} confident • Expert: ${expertConfident} confident" />
             <meta property="og:image" content="${avatarUrl}" />
-            <meta property="og:url" content="https://yourdomain.com/profile/${user.id}" />
+            <meta property="og:url" content="${process.env.FRONTEND_URL}/profile/${user.id}" />
             <meta name="theme-color" content="#5865F2" />
           </head>
           <body></body>
@@ -55,7 +55,7 @@ router.get("/:id", async (req, res) => {
       return res.send(html);
     }
 
-    return res.redirect(`https://yourdomain.com/app/profile/${user.id}`);
+    return res.redirect(`${process.env.FRONTEND_URL}/profile/${user.id}`);
   } catch (err) {
     console.error("Error generating OG meta:", err.message);
     res.status(500).send("Server error");
