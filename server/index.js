@@ -11,7 +11,7 @@ import leaderboardRouter from "./routes/leaderboard.js";
 import userRouter from "./routes/users.js";
 import { refreshModules } from "./moduleLoader.js";
 import { refreshBombs } from "./bombLoader.js";
-import ogMetaRouter from "./routes/ogMeta.js";
+import ogMetaRouter from "./routes/userEmbed.js";
 import dotenv from "dotenv";
 import path from "path";
 
