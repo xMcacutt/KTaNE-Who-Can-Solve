@@ -215,7 +215,7 @@ function UserAccount() {
     const handleDownloadProfile = async () => {
         try {
             const res = await axios.get(
-                `http://${window.location.hostname}:5000/users/${profileId}/download`,
+                `/api/users/${profileId}/download`,
                 { responseType: "blob" }
             );
 
