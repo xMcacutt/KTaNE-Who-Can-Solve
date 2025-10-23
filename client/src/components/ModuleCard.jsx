@@ -65,9 +65,9 @@ function ModuleCard({
             }}
         >
             <CardContent>
-                <Grid container spacing={2}>
-                    <Grid item size={9} xs={12} md={9}>
-                        <Box display="flex" alignItems="center">
+                <Grid container spacing={2} alignItems="stretch">
+                    <Grid item xs={12} md={9}>
+                        <Box display="flex" alignItems="center" height="100%">
                             <Box
                                 component="img"
                                 src={imageUrl}
@@ -106,53 +106,45 @@ function ModuleCard({
                         </Box>
                     </Grid>
 
-                    <Grid size={3} item>
-                        <Box display="flex"
+                    <Grid item xs={12} md={3}>
+                        <Box
+                            display="flex"
                             flexDirection="column"
                             justifyContent="center"
                             alignItems="center"
-                            height="100%">
+                            height="100%"
+                        >
                             {user ? (
-                                <Box display="flex" flexDirection="row" alignItems="center">
-                                    <Box ml={10} display="flex" alignItems="center">
-                                        <FormControlLabel
-                                            control={
-                                                <Checkbox
-
-                                                    checked={score?.canSolo || false}
-                                                    onChange={(e) => handleScoreChange("solo", e.target.checked)}
-                                                    disabled={!authUser || authUser.id !== user.id}
-                                                />
-                                            }
-                                            label="Can Solo"
-                                            labelPlacement="top"
-                                            sx={{ m: 0 }}
-                                        />
-                                    </Box>
-                                    <Box flex={1} display="flex" flexDirection="column" ml={5}>
-                                        <Box sx={{ width: '100%' }} display="flex" justifyContent="flex-end" alignItems="center">
-                                            <Box component="img"
-                                                width={25} height={25}
+                                <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} alignItems="center" gap={2}>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={score?.canSolo || false}
+                                                onChange={(e) => handleScoreChange("solo", e.target.checked)}
+                                                disabled={!authUser || authUser.id !== user.id}
+                                            />
+                                        }
+                                        label="Can Solo"
+                                        labelPlacement="top"
+                                        sx={{ m: 0 }}
+                                    />
+                                    <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
+                                        <Box display="flex" alignItems="center">
+                                            <Box
+                                                component="img"
+                                                width={25}
+                                                height={25}
                                                 src={confidenceIcons[score?.defuserConfidence || "Unknown"]}
-                                                alt={score?.defuserConfidence || "Unknown"} />
-                                            <FormControl
-                                                sx={{ m: 1, minWidth: 120 }}
-                                                size="small"
-                                            >
+                                                alt={score?.defuserConfidence || "Unknown"}
+                                            />
+                                            <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
                                                 <InputLabel id="defuser-conf-label">Defuser</InputLabel>
                                                 <Select
                                                     labelId="defuser-conf-label"
                                                     label="Defuser"
                                                     value={score?.defuserConfidence || "Unknown"}
                                                     disabled={!authUser || authUser.id !== user.id}
-                                                    onChange={(e) => {
-                                                        console.log("Defuser Select Changed:", e.target.value);
-                                                        handleScoreChange("defuser", e.target.value);
-                                                    }}
-                                                    displayEmpty
-                                                    sx={{
-                                                        width: (theme) => theme.typography.fontSize * 11,
-                                                    }}
+                                                    onChange={(e) => handleScoreChange("defuser", e.target.value)}
                                                 >
                                                     {confidenceOptions.map((option) => (
                                                         <MenuItem key={option} value={option}>
@@ -162,26 +154,22 @@ function ModuleCard({
                                                 </Select>
                                             </FormControl>
                                         </Box>
-                                        <Box sx={{ width: '100%' }} display="flex" justifyContent="flex-end" alignItems="center">
-                                            <Box component="img"
-                                                width={25} height={25}
+                                        <Box display="flex" alignItems="center">
+                                            <Box
+                                                component="img"
+                                                width={25}
+                                                height={25}
                                                 src={confidenceIcons[score?.expertConfidence || "Unknown"]}
-                                                alt={score?.expertConfidence || "Unknown"} />
-                                            <FormControl
-                                                sx={{ m: 1, minWidth: 120 }}
-                                                size="small"
-                                            >
+                                                alt={score?.expertConfidence || "Unknown"}
+                                            />
+                                            <FormControl sx={{ m: 1, minWidth: 120 }} size="small">
                                                 <InputLabel id="expert-conf-label">Expert</InputLabel>
                                                 <Select
                                                     labelId="expert-conf-label"
                                                     label="Expert"
-                                                    disabled={!authUser || authUser.id !== user.id}
                                                     value={score?.expertConfidence || "Unknown"}
+                                                    disabled={!authUser || authUser.id !== user.id}
                                                     onChange={(e) => handleScoreChange("expert", e.target.value)}
-                                                    displayEmpty
-                                                    sx={{
-                                                        width: (theme) => theme.typography.fontSize * 11,
-                                                    }}
                                                 >
                                                     {confidenceOptions.map((option) => (
                                                         <MenuItem key={option} value={option}>
@@ -202,7 +190,7 @@ function ModuleCard({
                     </Grid>
                 </Grid>
             </CardContent>
-        </Card>
+        </Card >
     );
 }
 
