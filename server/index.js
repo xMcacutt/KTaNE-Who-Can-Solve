@@ -20,11 +20,6 @@ dotenv.config({ path: path.resolve('.env') });
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'];
 const app = express();
 
-app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} from ${req.get('Origin') || 'no-origin'}`);
-  next();
-});
-
 app.use(cors({
   origin: (origin, callback) => {
     if (allowedOrigins.includes(origin) || !origin) {
