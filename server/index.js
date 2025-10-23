@@ -20,11 +20,17 @@ dotenv.config({ path: path.resolve('.env') });
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'];
 const app = express();
 
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl} from ${req.get('Origin') || 'no-origin'}`);
+  next();
+});
+
 app.use(cors({
   origin: (origin, callback) => {
     if (allowedOrigins.includes(origin) || !origin) {
       callback(null, true);
     } else {
+      console.log(origin);
       callback(new Error('Invalid origin'));
     }
   },
@@ -45,6 +51,7 @@ const authMiddleware = (req, res, next) => {
   }
   res.status(401).json({ message: "Not authenticated" });
 };
+
 
 app.use('/auth', authRouter);
 app.use('/missions', missionRouter);

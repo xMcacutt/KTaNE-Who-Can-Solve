@@ -125,7 +125,7 @@ async function insertMissions() {
         ];
 
         const { rows } = await pool.query(query, values);
-        console.log(`Upserted mission: ${mission.name} (Pack: ${packName}), ID: ${rows[0].id}`);
+        //console.log(`Upserted mission: ${mission.name} (Pack: ${packName}), ID: ${rows[0].id}`);
       }
     }
   } catch (err) {

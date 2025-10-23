@@ -65,8 +65,8 @@ function ModuleCard({
             }}
         >
             <CardContent>
-                <Grid container spacing={2} alignItems="stretch">
-                    <Grid item xs={12} md={9}>
+                <Grid container alignItems="stretch">
+                    <Grid item xs={12} md={9} width="75%">
                         <Box display="flex" alignItems="center" height="100%">
                             <Box
                                 component="img"
@@ -106,13 +106,18 @@ function ModuleCard({
                         </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={3}>
+                    <Grid item xs={12} md={3} width="25%" sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        alignItems: "center",
+                    }}>
                         <Box
                             display="flex"
-                            flexDirection="column"
-                            justifyContent="center"
+                            flexDirection="row"
                             alignItems="center"
-                            height="100%"
+                            justifyContent="flex-end"
+                            gap={2}
+                            width="100%"
                         >
                             {user ? (
                                 <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} alignItems="center" gap={2}>
