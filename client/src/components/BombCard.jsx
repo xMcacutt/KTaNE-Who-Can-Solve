@@ -150,53 +150,56 @@ function BombCard({
                                     <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" />
                                 </Box>
                             </Box>
-                            <Grid container spacing={1} sx={{ mt: 2 }}>
-                                {users.map((u) => {
-                                    const uniqueModuleIds = [
-                                        ...new Set(
-                                            bombs.flatMap((bomb) =>
-                                                bomb.pools?.flatMap((p) =>
-                                                    p.modules.map((mod) =>
-                                                        typeof mod === "string" ? mod : mod.module_id || mod.id
-                                                    )
-                                                ) || []
-                                            )
-                                        ),
-                                    ];
+                            {
+                                authUser &&
+                                <Grid container spacing={1} sx={{ mt: 2 }}>
+                                    {users.map((u) => {
+                                        const uniqueModuleIds = [
+                                            ...new Set(
+                                                bombs.flatMap((bomb) =>
+                                                    bomb.pools?.flatMap((p) =>
+                                                        p.modules.map((mod) =>
+                                                            typeof mod === "string" ? mod : mod.module_id || mod.id
+                                                        )
+                                                    ) || []
+                                                )
+                                            ),
+                                        ];
 
-                                    const known = uniqueModuleIds.filter((moduleId) => {
-                                        const userScores = Array.isArray(u.scores) ? u.scores : [];
-                                        const s = userScores.find((sc) => sc.module_id === moduleId);
+                                        const known = uniqueModuleIds.filter((moduleId) => {
+                                            const userScores = Array.isArray(u.scores) ? u.scores : [];
+                                            const s = userScores.find((sc) => sc.module_id === moduleId);
 
-                                        if (users.length === 1) {
-                                            const defConf =
-                                                s?.defuser_confidence === "Confident" ||
-                                                s?.defuser_confidence === "Attempted";
-                                            const expConf =
-                                                s?.expert_confidence === "Confident" ||
-                                                s?.expert_confidence === "Attempted";
-                                            return defConf && expConf;
-                                        }
+                                            if (users.length === 1) {
+                                                const defConf =
+                                                    s?.defuser_confidence === "Confident" ||
+                                                    s?.defuser_confidence === "Attempted";
+                                                const expConf =
+                                                    s?.expert_confidence === "Confident" ||
+                                                    s?.expert_confidence === "Attempted";
+                                                return defConf && expConf;
+                                            }
 
-                                        const conf = u.isDefuser
-                                            ? s?.defuser_confidence
-                                            : s?.expert_confidence;
-                                        return conf === "Confident" || conf === "Attempted";
-                                    }).length;
+                                            const conf = u.isDefuser
+                                                ? s?.defuser_confidence
+                                                : s?.expert_confidence;
+                                            return conf === "Confident" || conf === "Attempted";
+                                        }).length;
 
-                                    return (
-                                        <Grid item key={u.id} xs={3}>
-                                            <Box textAlign="center">
-                                                <Avatar src={u.avatar} sx={{ mx: "auto", mb: 1 }} />
-                                                <Typography variant="body2">{truncate(u.name, 10)}</Typography>
-                                                <Typography variant="caption" fontSize="1.2rem">
-                                                    {known}/{uniqueModuleIds.length}
-                                                </Typography>
-                                            </Box>
-                                        </Grid>
-                                    );
-                                })}
-                            </Grid>
+                                        return (
+                                            <Grid item key={u.id} xs={3}>
+                                                <Box textAlign="center">
+                                                    <Avatar src={u.avatar} sx={{ mx: "auto", mb: 1 }} />
+                                                    <Typography variant="body2">{truncate(u.name, 10)}</Typography>
+                                                    <Typography variant="caption" fontSize="1.2rem">
+                                                        {known}/{uniqueModuleIds.length}
+                                                    </Typography>
+                                                </Box>
+                                            </Grid>
+                                        );
+                                    })}
+                                </Grid>
+                            }
                         </Box>
                     </Grid>
                     <Grid item size={3} xs={12} md={3}>

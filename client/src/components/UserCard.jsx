@@ -104,7 +104,7 @@ function UserCard({
         >
             <CardContent>
                 <Grid container spacing={2} justifyContent="space-between" alignItems="center">
-                    <Grid item>
+                    <Grid item sx={{ pl: 2 }}>
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar src={user.avatar} alt={user.name} sx={{ width: 48, height: 48 }} />
                             <Box>
@@ -116,7 +116,7 @@ function UserCard({
                         </Stack>
                     </Grid>
 
-                    <Grid item>
+                    <Grid item sx={{ pr: 2 }}>
                         <Stack spacing={0.5} alignItems="flex-end" justifyContent="center">
                             <Typography variant="subtitle1" fontWeight="bold">
                                 Rank: #{user.rank}

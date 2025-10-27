@@ -66,14 +66,14 @@ function ModuleCard({
         >
             <CardContent>
                 <Grid container alignItems="stretch">
-                    <Grid item xs={12} md={9} width="75%">
+                    <Grid item xs={12} sx={{ pl: 1 }} md={9} width="75%" >
                         <Box display="flex" alignItems="center" height="100%">
                             <Box
                                 component="img"
                                 src={imageUrl}
                                 alt={module.name}
-                                width={48}
-                                height={48}
+                                width={64}
+                                height={64}
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = "/fallback-img.png";
@@ -108,6 +108,7 @@ function ModuleCard({
 
                     <Grid item xs={12} md={3} width="25%" sx={{
                         display: "flex",
+                        pr: 1,
                         justifyContent: "flex-end",
                         alignItems: "center",
                     }}>

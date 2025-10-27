@@ -21,30 +21,30 @@ const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'];
 const app = express();
 
 app.use(cors({
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      callback(null, true);
-    } else {
-      console.log(origin);
-      callback(new Error('Invalid origin'));
-    }
-  },
-  credentials: true
+    origin: (origin, callback) => {
+        if (allowedOrigins.includes(origin) || !origin) {
+            callback(null, true);
+        } else {
+            console.log(origin);
+            callback(new Error('Invalid origin'));
+        }
+    },
+    credentials: true
 }));
 app.use(json());
 app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
 const authMiddleware = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Not authenticated" });
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.status(401).json({ message: "Not authenticated" });
 };
 
 
@@ -55,11 +55,11 @@ app.use('/scores', scoreRouter);
 app.use('/leaderboard', leaderboardRouter);
 app.use('/users', userRouter);
 app.use('/practice', practiceRouter);
-app.use("/profile", ogMetaRouter); 
+app.use("/profile", ogMetaRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => {
-  refreshModules();
-  refreshBombs();
-  setInterval(refreshModules, 1800000);
+    refreshModules();
+    refreshBombs();
+    setInterval(refreshModules, 1800000);
 });

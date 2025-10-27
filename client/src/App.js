@@ -16,69 +16,69 @@ const Practice = lazy(() => import("./pages/Practice.jsx"));
 const Mission = lazy(() => import("./pages/Mission.jsx"));
 
 const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, staleTime: 5 * 60 * 1000 },
-  },
+    defaultOptions: {
+        queries: { retry: 1, staleTime: 5 * 60 * 1000 },
+    },
 });
 
 function App() {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <QueryClientProvider client={queryClient}>
-        <ActiveUsersProvider>
-          <AuthProvider>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route index element={<Home />} />
-                <Route
-                  path="users"
-                  element={
-                    <Suspense fallback={<p>Loading users...</p>}>
-                      <Users />
-                    </Suspense>
-                  }
-                />
-                <Route
-                  path="bombs"
-                  element={
-                    <Suspense fallback={<p>Loading bombs...</p>}>
-                      <Bombs />
-                    </Suspense>
-                  }
-                />
-                <Route
-                  path="practice"
-                  element={
-                    <Suspense fallback={<p>Loading practice...</p>}>
-                      <Practice />
-                    </Suspense>
-                  }
-                />
-                <Route
-                  path="profile/:id"
-                  element={
-                    <Suspense fallback={<p>Loading profile...</p>}>
-                      <UserAccount />
-                    </Suspense>
-                  }
-                />
-                <Route
-                  path="missions/:missionName"
-                  element={
-                    <Suspense fallback={<p>Loading mission...</p>}>
-                      <Mission />
-                    </Suspense>
-                  }
-                />
-                <Route path="*" element={<p>Not found</p>} />
-              </Route>
-            </Routes>
-          </AuthProvider>
-        </ActiveUsersProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
-  );
+    return (
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <QueryClientProvider client={queryClient}>
+                <ActiveUsersProvider>
+                    <AuthProvider>
+                        <Routes>
+                            <Route element={<Layout />}>
+                                <Route index element={<Home />} />
+                                <Route
+                                    path="users"
+                                    element={
+                                        <Suspense fallback={<p>Loading users...</p>}>
+                                            <Users />
+                                        </Suspense>
+                                    }
+                                />
+                                <Route
+                                    path="bombs"
+                                    element={
+                                        <Suspense fallback={<p>Loading bombs...</p>}>
+                                            <Bombs />
+                                        </Suspense>
+                                    }
+                                />
+                                <Route
+                                    path="practice"
+                                    element={
+                                        <Suspense fallback={<p>Loading practice...</p>}>
+                                            <Practice />
+                                        </Suspense>
+                                    }
+                                />
+                                <Route
+                                    path="profile/:id"
+                                    element={
+                                        <Suspense fallback={<p>Loading profile...</p>}>
+                                            <UserAccount />
+                                        </Suspense>
+                                    }
+                                />
+                                <Route
+                                    path="missions/:missionName"
+                                    element={
+                                        <Suspense fallback={<p>Loading mission...</p>}>
+                                            <Mission />
+                                        </Suspense>
+                                    }
+                                />
+                                <Route path="*" element={<p>Not found</p>} />
+                            </Route>
+                        </Routes>
+                    </AuthProvider>
+                </ActiveUsersProvider>
+            </QueryClientProvider>
+        </ThemeProvider>
+    );
 }
 
 export default App;

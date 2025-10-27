@@ -243,124 +243,131 @@ function UserAccount() {
 
 
     return (
-        <Box p={3}>
-            <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar src={profileUser?.avatar} sx={{ width: 48, height: 48 }} />
-                <Typography variant="h5" gutterBottom>
-                    {profileUser?.name}'s Account
-                </Typography>
-            </Stack>
-
-            <Typography variant="subtitle1" gutterBottom>
-                Discord ID: {profileUser?.id || "N/A"}
-            </Typography>
-
-            <Stack direction="row" spacing={2} my={2}>
-                {isOwnAccount && (
-                    <>
-                        <Button
-                            variant="contained"
-                            onClick={() => handleOpenDialog("profile")}
-                        >
-                            Upload Profile
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={() => handleOpenDialog("log")}
-                        >
-                            Upload Log
-                        </Button>
-                    </>
-                )}
-                <Button
-                    variant="outlined"
-                    onClick={handleDownloadProfile}
-                >
-                    Download Profile
-                </Button>
-            </Stack>
-
-            <Dialog open={dialogOpen} onClose={handleCloseDialog}>
-                <DialogTitle>Upload {uploadType}</DialogTitle>
-                <DialogContent>
-                    <Typography gutterBottom>
-                        Is the profile for expert or defuser?
+        <Box
+            display="flex"
+            flexDirection="column"
+            sx={{
+                height: "100%",
+                overflow: "hidden",
+            }}
+        >
+            <Box sx={{ flexShrink: 0, p: 2 }}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar src={profileUser?.avatar} sx={{ width: 48, height: 48 }} />
+                    <Typography variant="h5" gutterBottom>
+                        {profileUser?.name}'s Account
                     </Typography>
-                    <RadioGroup
-                        row
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                    >
-                        <FormControlLabel value="defuser" control={<Radio />} label="Defuser" />
-                        <FormControlLabel value="expert" control={<Radio />} label="Expert" />
-                        <FormControlLabel value="both" control={<Radio />} label="Both" />
-                        {uploadType === "profile" && (
-                            <FormControlLabel value="solo" control={<Radio />} label="Solo" />
-                        )}
-                    </RadioGroup>
-                    <Box mt={2}>
-                        <input type="file" onChange={handleFileChange} />
-                    </Box>
-                    {uploadType === "log" && (
-                        <Box mt={2}>
-                            <Typography gutterBottom>Upload a file or paste a Logfile Analyzer link:</Typography>
-                            <Typography align="center" variant="body2" sx={{ my: 1 }}>— or —</Typography>
-                            <input
-                                type="text"
-                                placeholder="https://ktane.timwi.de/More/Logfile%20Analyzer.html#file=..."
-                                value={logUrl}
-                                onChange={(e) => setLogUrl(e.target.value)}
-                                style={{ width: "100%" }}
-                            />
-                        </Box>
-                    )}
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseDialog}>Cancel</Button>
-                    <Button onClick={handleUpload} variant="contained">
-                        Upload
-                    </Button>
-                </DialogActions>
-            </Dialog>
-
-            <Box mb={3}>
-                <Typography variant="subtitle1">User Stats (Total Modules: {totalModules})</Typography>
-                <Stack spacing={2} mt={1}>
-                    <Box>
-                        <Typography variant="subtitle2">Defuser:</Typography>
-                        <Stack direction="row" spacing={3} mt={1}>
-                            {Object.keys(stats.defuser).map((key) => (
-                                <Stack direction="row" alignItems="center" key={key} spacing={1}>
-                                    <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.2em" }} />
-                                    <Typography variant="body2">{stats.defuser[key]}/{totalModules}</Typography>
-                                </Stack>
-                            ))}
-                        </Stack>
-                    </Box>
-
-                    <Box>
-                        <Typography variant="subtitle2">Expert:</Typography>
-                        <Stack direction="row" spacing={3} mt={1}>
-                            {Object.keys(stats.expert).map((key) => (
-                                <Stack direction="row" alignItems="center" key={key} spacing={1}>
-                                    <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.2em" }} />
-                                    <Typography variant="body2">{stats.expert[key]}/{totalModules}</Typography>
-                                </Stack>
-                            ))}
-                        </Stack>
-                    </Box>
                 </Stack>
-            </Box>
 
-            {isOwnAccount ? (
-                <Button variant="contained" color="error" onClick={handleDeleteAccount}>
-                    Delete My Data
-                </Button>
-            ) : null}
+                <Typography variant="subtitle1" gutterBottom>
+                    Discord ID: {profileUser?.id || "N/A"}
+                </Typography>
 
-            <Divider sx={{ my: 2 }} />
+                <Stack direction="row" spacing={2} my={2}>
+                    {isOwnAccount && (
+                        <>
+                            <Button
+                                variant="contained"
+                                onClick={() => handleOpenDialog("profile")}
+                            >
+                                Upload Profile
+                            </Button>
+                            <Button
+                                variant="contained"
+                                onClick={() => handleOpenDialog("log")}
+                            >
+                                Upload Log
+                            </Button>
+                        </>
+                    )}
+                    <Button
+                        variant="outlined"
+                        onClick={handleDownloadProfile}
+                    >
+                        Download Profile
+                    </Button>
 
-            <Box mb={3}>
+                    {isOwnAccount ? (
+                        <Button variant="contained" color="error" onClick={handleDeleteAccount}>
+                            Delete My Data
+                        </Button>
+                    ) : null}
+                </Stack>
+
+                <Dialog open={dialogOpen} onClose={handleCloseDialog}>
+                    <DialogTitle>Upload {uploadType}</DialogTitle>
+                    <DialogContent>
+                        <Typography gutterBottom>
+                            Is the profile for expert or defuser?
+                        </Typography>
+                        <RadioGroup
+                            row
+                            value={role}
+                            onChange={(e) => setRole(e.target.value)}
+                        >
+                            <FormControlLabel value="defuser" control={<Radio />} label="Defuser" />
+                            <FormControlLabel value="expert" control={<Radio />} label="Expert" />
+                            <FormControlLabel value="both" control={<Radio />} label="Both" />
+                            {uploadType === "profile" && (
+                                <FormControlLabel value="solo" control={<Radio />} label="Solo" />
+                            )}
+                        </RadioGroup>
+                        <Box mt={2}>
+                            <input type="file" onChange={handleFileChange} />
+                        </Box>
+                        {uploadType === "log" && (
+                            <Box mt={2}>
+                                <Typography gutterBottom>Upload a file or paste a Logfile Analyzer link:</Typography>
+                                <Typography align="center" variant="body2" sx={{ my: 1 }}>— or —</Typography>
+                                <input
+                                    type="text"
+                                    placeholder="https://ktane.timwi.de/More/Logfile%20Analyzer.html#file=..."
+                                    value={logUrl}
+                                    onChange={(e) => setLogUrl(e.target.value)}
+                                    style={{ width: "100%" }}
+                                />
+                            </Box>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleCloseDialog}>Cancel</Button>
+                        <Button onClick={handleUpload} variant="contained">
+                            Upload
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+                <Box mb={3}>
+                    <Typography variant="subtitle1">User Stats (Total Modules: {totalModules})</Typography>
+                    <Stack spacing={2} mt={1}>
+                        <Box>
+                            <Typography variant="subtitle2">Defuser:</Typography>
+                            <Stack direction="row" spacing={3} mt={1}>
+                                {Object.keys(stats.defuser).map((key) => (
+                                    <Stack direction="row" alignItems="center" key={key} spacing={1}>
+                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.2em" }} />
+                                        <Typography variant="body2">{stats.defuser[key]}/{totalModules}</Typography>
+                                    </Stack>
+                                ))}
+                            </Stack>
+                        </Box>
+
+                        <Box>
+                            <Typography variant="subtitle2">Expert:</Typography>
+                            <Stack direction="row" spacing={3} mt={1}>
+                                {Object.keys(stats.expert).map((key) => (
+                                    <Stack direction="row" alignItems="center" key={key} spacing={1}>
+                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.2em" }} />
+                                        <Typography variant="body2">{stats.expert[key]}/{totalModules}</Typography>
+                                    </Stack>
+                                ))}
+                            </Stack>
+                        </Box>
+                    </Stack>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
                 <Typography variant="subtitle1" gutterBottom>Module List</Typography>
                 <Stack direction="row" spacing={2} mb={2}>
                     <FormControl size="small">
@@ -381,20 +388,24 @@ function UserAccount() {
                         </Select>
                     </FormControl>
                 </Stack>
+            </Box>
 
+            <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
                 {filteredModules.length > 0 ? (
                     <Virtuoso
-                        style={{ width: '100%' }}
-                        totalCount={modules.length}
+                        style={{ height: "97%", width: "100%" }}
+                        totalCount={filteredModules.length}
                         itemContent={(index) => {
                             const module = filteredModules[index];
+                            if (!module) return null;
+
                             return (
                                 <div style={{ paddingBottom: 16 }}>
                                     <ModuleCard
                                         key={module.id}
                                         module={module}
                                         index={index}
-                                        user={authUser}
+                                        user={profileUser}
                                         authUser={authUser}
                                         score={scoresObj[module.module_id]}
                                         setScores={setScores}
@@ -402,7 +413,7 @@ function UserAccount() {
                                 </div>
                             );
                         }}
-                        computeItemKey={(index) => modules[index]?.id}
+                        computeItemKey={(index) => filteredModules[index]?.id}
                         increaseViewportBy={200}
                     />
                 ) : (

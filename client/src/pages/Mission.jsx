@@ -8,6 +8,7 @@ import UserPanel from "../components/UserPanel";
 import { formatTime, bossToColor, confidenceIcons, difficultyMap, truncate } from "../utility";
 import { useAuth } from "../context/AuthContext";
 
+
 const getHeatmapColor = (module) => {
     const expert_difficulty = difficultyMap[module.expert_difficulty];
     const defuser_difficulty = difficultyMap[module.defuser_difficulty];
@@ -16,7 +17,7 @@ const getHeatmapColor = (module) => {
     return `hsl(${hue}, 70%, 50%)`;
 };
 
-function ModuleChip({ module, probability, viewStyle, users }) {
+function ModuleChip({ module, probability, viewStyle, users, authUser }) {
     const encodedModuleName = encodeURIComponent(module.icon_file_name || module.name).replace(/'/g, "\\'");
     const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
     const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
@@ -140,32 +141,35 @@ function ModuleChip({ module, probability, viewStyle, users }) {
                 </Box>
 
                 <Box sx={{ ...layoutProps, width: '100%', mt: 1 }}>
-                    {displayedUsers.map((user, i) => {
-                        const score = user.scores?.find((s) => s.module_id === module.module_id) || {};
-                        const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
-                        if (conf === "Avoid") return null;
+                    {
+                        authUser &&
+                        displayedUsers.map((user, i) => {
+                            const score = user.scores?.find((s) => s.module_id === module.module_id) || {};
+                            const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
+                            if (conf === "Avoid") return null;
 
-                        const borderColor =
-                            conf === "Confident" ? "limegreen" :
-                                conf === "Attempted" ? "gold" :
-                                    "transparent";
+                            const borderColor =
+                                conf === "Confident" ? "limegreen" :
+                                    conf === "Attempted" ? "gold" :
+                                        "transparent";
 
-                        const brightness = !conf || conf === "Unknown" ? "brightness(0.3)" : "brightness(1)";
+                            const brightness = !conf || conf === "Unknown" ? "brightness(0.3)" : "brightness(1)";
 
-                        return (
-                            <Avatar
-                                key={`${user.id}-${i}`}
-                                src={user.avatar}
-                                sx={{
-                                    width: avatarSize,
-                                    height: avatarSize,
-                                    border: `${borderWidth}px solid ${borderColor}`,
-                                    filter: brightness,
-                                    transition: '0.2s ease all',
-                                }}
-                            />
-                        );
-                    })}
+                            return (
+                                <Avatar
+                                    key={`${user.id}-${i}`}
+                                    src={user.avatar}
+                                    sx={{
+                                        width: avatarSize,
+                                        height: avatarSize,
+                                        border: `${borderWidth}px solid ${borderColor}`,
+                                        filter: brightness,
+                                        transition: '0.2s ease all',
+                                    }}
+                                />
+                            );
+                        })
+                    }
                 </Box>
 
                 {probability != null && (
@@ -383,6 +387,7 @@ function BombView({ bomb, viewStyle, filter, users }) {
                                     probability={probability}
                                     viewStyle={viewStyle}
                                     users={users}
+                                    authUser={authUser}
                                 />
                             );
                         });
@@ -433,6 +438,8 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
     const [viewStyle, setViewStyle] = useState('Large Icons');
     const [filter, setFilter] = useState('Show All');
     const [panelOpen, setPanelOpen] = useState(false);
+    const { authUser } = useAuth();
+
 
     const handleViewStyleChange = (event) => {
         setViewStyle(event.target.value);
@@ -474,9 +481,12 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
                 <Typography variant="h4" gutterBottom>
                     {mission.mission_name}
                 </Typography>
-                <IconButton onClick={() => setPanelOpen(true)}>
-                    <GroupAddIcon />
-                </IconButton>
+                {
+                    authUser &&
+                    <IconButton onClick={() => setPanelOpen(true)}>
+                        <GroupAddIcon />
+                    </IconButton>
+                }
             </Box>
             <Typography variant="subtitle1" gutterBottom>
                 By {mission.authors?.join(', ') || 'Unknown'} | Pack: {mission.pack_name}

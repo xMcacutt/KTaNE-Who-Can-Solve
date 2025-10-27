@@ -4,14 +4,14 @@ import pool from "../db.js";
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-  try {
-    const search = req.query.search?.toLowerCase() || "";
-    const sort = req.query.sort?.toLowerCase() || "combined";
+    try {
+        const search = req.query.search?.toLowerCase() || "";
+        const sort = req.query.sort?.toLowerCase() || "combined";
 
-    const validSorts = ["defuser", "expert", "solo", "combined"];
-    const sortBy = validSorts.includes(sort) ? sort : "combined";
+        const validSorts = ["defuser", "expert", "solo", "combined"];
+        const sortBy = validSorts.includes(sort) ? sort : "combined";
 
-    const query = `
+        const query = `
       WITH user_scores AS (
         SELECT
           u.discord_id AS id,
@@ -69,39 +69,39 @@ router.get("/", async (req, res) => {
       LIMIT 100;
     `;
 
-    const result = await pool.query(query, [`%${search}%`, sortBy]);
+        const result = await pool.query(query, [`%${search}%`, sortBy]);
 
-    const users = result.rows.map((row, index) => {
-      const avatarUrl = row.avatar
-        ? `https://cdn.discordapp.com/avatars/${row.id}/${row.avatar}.png?size=256`
-        : `https://cdn.discordapp.com/embed/avatars/${parseInt(row.id) % 5}.png`;
+        const users = result.rows.map((row, index) => {
+            const avatarUrl = row.avatar
+                ? `https://cdn.discordapp.com/avatars/${row.id}/${row.avatar}.png?size=256`
+                : `https://cdn.discordapp.com/embed/avatars/${parseInt(row.id) % 5}.png`;
 
-      return {
-        id: row.id,
-        name: row.name,
-        defuser_unknown: row.defuser_unknown,
-        defuser_confident: row.defuser_confident,
-        defuser_attempted: row.defuser_attempted,
-        defuser_avoid: row.defuser_avoid,
-        expert_unknown: row.expert_unknown,
-        expert_confident: row.expert_confident,
-        expert_attempted: row.expert_attempted,
-        expert_avoid: row.expert_avoid,
-        defuser_score: row.defuser_score,
-        expert_score: row.expert_score,
-        solo_score: row.solo_score,
-        solo_count: row.solo_count,
-        combined_score: row.combined_score,
-        rank: index + 1,
-        avatar: avatarUrl,
-      };
-    });
+            return {
+                id: row.id,
+                name: row.name,
+                defuser_unknown: row.defuser_unknown,
+                defuser_confident: row.defuser_confident,
+                defuser_attempted: row.defuser_attempted,
+                defuser_avoid: row.defuser_avoid,
+                expert_unknown: row.expert_unknown,
+                expert_confident: row.expert_confident,
+                expert_attempted: row.expert_attempted,
+                expert_avoid: row.expert_avoid,
+                defuser_score: row.defuser_score,
+                expert_score: row.expert_score,
+                solo_score: row.solo_score,
+                solo_count: row.solo_count,
+                combined_score: row.combined_score,
+                rank: index + 1,
+                avatar: avatarUrl,
+            };
+        });
 
-    res.json(users);
-  } catch (error) {
-    console.error("Error fetching leaderboard:", error.message);
-    res.status(500).json({ message: "Server error" });
-  }
+        res.json(users);
+    } catch (error) {
+        console.error("Error fetching leaderboard:", error.message);
+        res.status(500).json({ message: "Server error" });
+    }
 });
 
 export default router;
