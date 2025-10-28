@@ -54,6 +54,11 @@ function buildIconMap() {
 
 async function processModules(modules, iconMap, isTranslation = false, seenModuleIds) {
     for (const { file, moduleData } of modules) {
+        
+        if (moduleData.Type == "Widget" || moduleData.Type == "Holdable") {
+            continue;
+        }
+
         const moduleId = moduleData.ModuleID;
         if (!moduleId) {
             console.warn(`Skipping file ${file}: No module_id or name found.`);
@@ -71,6 +76,7 @@ async function processModules(modules, iconMap, isTranslation = false, seenModul
                 ? moduleData.Descriptions[0].Tags
                 : null;
         }
+
 
         if (!description && moduleData.Description) {
             const parts = moduleData.Description.split("Tags:");
@@ -158,8 +164,6 @@ export async function refreshModules() {
         const translations = [];
 
         for (const file of files) {
-            if (file.includes("Appendix")) continue;
-
             const moduleData = readJsonFile(file);
             if (!moduleData) continue;
 
