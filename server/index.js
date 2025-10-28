@@ -40,14 +40,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-const authMiddleware = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    res.status(401).json({ message: "Not authenticated" });
-};
-
-
 app.use('/auth', authRouter);
 app.use('/missions', missionRouter);
 app.use('/modules', moduleRouter);

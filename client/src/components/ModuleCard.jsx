@@ -29,7 +29,7 @@ function ModuleCard({
         }));
         try {
             await axios.put(
-                `/api/scores/${module.module_id}`,
+                `/api/scores/${encodeURIComponent(module.module_id)}`,
                 {
                     defuserConfidence: newScore.defuserConfidence,
                     expertConfidence: newScore.expertConfidence,
