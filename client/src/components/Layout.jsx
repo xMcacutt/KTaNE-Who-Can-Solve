@@ -12,7 +12,6 @@ import {
 export default function Layout() {
     const { authUser, handleLogin, handleLogout } = useAuth();
     const [open, setOpen] = useState(false);
-    const navigate = useNavigate();
 
     const handleLogoutClick = async () => {
         try {
@@ -32,6 +31,7 @@ export default function Layout() {
                 sx={{
                     height: 64,
                     minHeight: 64,
+                    marginBottom: 1,
                     display: "flex",
                     justifyContent: "center",
                 }}
@@ -142,13 +142,16 @@ export default function Layout() {
                 sx={{
                     flexGrow: 1,
                     height: "calc(100vh - 64px)",
-                    overflow: "hidden",
-                    px: 2,
-                    width: "90%",
+                    pt: 2,
+                    overflowY: "auto",
+                    my: "auto",
                     mx: "auto",
                 }}
             >
-                <Outlet />
+
+                <Box sx={{ width: "90%", mx: "auto" }}>
+                    <Outlet />
+                </Box>
             </Box>
         </>
     );

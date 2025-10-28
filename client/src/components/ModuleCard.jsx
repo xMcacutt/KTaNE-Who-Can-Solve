@@ -74,6 +74,9 @@ function ModuleCard({
                                 alt={module.name}
                                 width={64}
                                 height={64}
+                                sx={{
+                                    imageRendering: 'pixelated',
+                                }}
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = "/fallback-img.png";

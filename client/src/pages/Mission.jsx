@@ -39,6 +39,13 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
         : "Unknown";
     const expertConfs = experts.map(e => e.scores?.find(s => s.module_id === module.module_id)?.expert_confidence || "Unknown");
 
+    console.log({
+        module: module.name,
+        defuserConf,
+        expertConfs,
+        defuserScores: defuser?.scores?.slice(0, 3)
+    });
+
     let summaryIcon = confidenceIcons.Avoid;
     const anyExpertConfident = expertConfs.includes("Confident");
     if (defuserConf === "Confident" && anyExpertConfident) summaryIcon = confidenceIcons.Confident;

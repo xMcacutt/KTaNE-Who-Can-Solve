@@ -20,7 +20,7 @@ export function ActiveUsersProvider({ children }) {
     try {
       if (activeUsers.some((u) => u.id === newUser.id)) return;
 
-      const res = await fetch(`/users/${newUser.id}/scores`);
+      const res = await fetch(`/api/users/${newUser.id}/scores`);
       if (!res.ok) throw new Error(`Failed to fetch scores for ${newUser.id}`);
       let scores = await res.json();
       if (!Array.isArray(scores)) scores = [];
