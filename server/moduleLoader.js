@@ -52,6 +52,81 @@ function buildIconMap() {
     return map;
 }
 
+async function insertSpecialModules(seenModuleIds) {
+    const specialModules = [
+        {
+            moduleId: "ALL_VANILLA_SOLVABLE",
+            name: "All Vanilla Solvable",
+            type: "Regular",
+            iconFileName: "ALL_VANILLA_SOLVABLE"
+        },
+        {
+            moduleId: "ALL_MODS_SOLVABLE",
+            name: "All Mods Solvable",
+            type: "Regular",
+            iconFileName: "ALL_MODS_SOLVABLE"
+        },
+        {
+            moduleId: "ALL_SOLVABLE",
+            name: "All Solvable",
+            type: "Regular",
+            iconFileName: "ALL_SOLVABLE"
+        },
+        {
+            moduleId: "ALL_VANILLA_NEEDY",
+            name: "All Vanilla Needy",
+            type: "Needy",
+            iconFileName: "ALL_VANILLA_NEEDY"
+        },
+        {
+            moduleId: "ALL_MODS_NEEDY",
+            name: "All Mods Needy",
+            type: "Needy",
+            iconFileName: "ALL_MODS_NEEDY"
+        },
+        {
+            moduleId: "ALL_NEEDY",
+            name: "All Needy",
+            type: "Needy",
+            iconFileName: "ALL_NEEDY"
+        }
+    ];
+
+    const query = `
+        INSERT INTO modules (module_id, name, description, published, developers, defuser_difficulty,
+                             expert_difficulty, tags, icon_file_name, sort_key, type, boss_status, quirks, periodic_table_element)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+        ON CONFLICT (module_id) DO UPDATE
+          SET name=$2, description=$3, published=$4, developers=$5,
+              defuser_difficulty=$6, expert_difficulty=$7, tags=$8,
+              icon_file_name=$9, sort_key=$10, type=$11,
+              boss_status=$12, quirks=$13, periodic_table_element=$14
+    `;
+
+    for (const mod of specialModules) {
+        seenModuleIds.add(mod.moduleId);
+
+        const values = [
+            mod.moduleId,
+            mod.name,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            mod.iconFileName,
+            null,
+            mod.type,
+            null, 
+            [], 
+            null 
+        ];
+
+        await pool.query(query, values);
+    }
+}
+
 async function processModules(modules, iconMap, isTranslation = false, seenModuleIds) {
     for (const { file, moduleData } of modules) {
         
@@ -114,7 +189,7 @@ async function processModules(modules, iconMap, isTranslation = false, seenModul
 
         if (!iconFileMatch) {
             console.warn(`No matching icon for module ${moduleData.Name})`);
-            continue;
+            iconFileMatch = null;
         }
 
         const query = `
@@ -178,6 +253,7 @@ export async function refreshModules() {
 
         await processModules(translations, iconMap, true, seenModuleIds);
 
+        await insertSpecialModules(seenModuleIds);
         
         await pool.query(
             "DELETE FROM modules WHERE module_id <> ALL($1::text[])",

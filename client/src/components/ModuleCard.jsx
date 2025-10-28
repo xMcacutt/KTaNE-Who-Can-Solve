@@ -49,10 +49,21 @@ function ModuleCard({
 
     const encodedModuleName = encodeURIComponent(module.icon_file_name);
     const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
+    const localImageUrl = `/icons/${module.icon_file_name}.png`;
     const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
     const formattedDate = module.published
         ? new Date(module.published).toISOString().split("T")[0]
         : "N/A";
+
+    const handleImageError = (e) => {
+        const currentSrc = e.target.src;
+        if (currentSrc.includes('raw.githubusercontent.com')) {
+            e.target.src = localImageUrl;
+        } else {
+            e.target.src = "/icons/Unknown Module.png";
+            e.target.onerror = null;
+        }
+    };
 
     return (
         <Card
@@ -77,10 +88,7 @@ function ModuleCard({
                                 sx={{
                                     imageRendering: 'pixelated',
                                 }}
-                                onError={(e) => {
-                                    e.target.onerror = null;
-                                    e.target.src = "/fallback-img.png";
-                                }}
+                                onError={(e) => handleImageError(e)}
                             />
                             <Box ml={2}>
                                 <Link href={manualUrl}>

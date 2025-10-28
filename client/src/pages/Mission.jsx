@@ -19,8 +19,25 @@ const getHeatmapColor = (module) => {
 
 function ModuleChip({ module, probability, viewStyle, users, authUser }) {
     const encodedModuleName = encodeURIComponent(module.icon_file_name || module.name).replace(/'/g, "\\'");
+    const [bgImageUrl, setBgImageUrl] = useState('');
     const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
+    const localImageUrl = `/icons/${module.icon_file_name}.png`;
     const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
+
+    useEffect(() => {
+        const loadImage = (url, onSuccess, onError) => {
+            const img = new Image();
+            img.onload = () => onSuccess(url);
+            img.onerror = onError;
+            img.src = url;
+        };
+
+        loadImage(imageUrl, (url) => setBgImageUrl(url), () => {
+            loadImage(localImageUrl, (url) => setBgImageUrl(url), () => {
+                setBgImageUrl('/icons/Unknown Module.png');
+            });
+        });
+    }, [imageUrl, localImageUrl]);
 
     let effectiveUsers = [...users];
     if (users.length === 1) {
@@ -99,7 +116,7 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                     position: 'absolute',
                     inset: 0,
                     backgroundColor: viewStyle === 'Difficulty Heatmap' ? getHeatmapColor(module) : 'transparent',
-                    backgroundImage: `${viewStyle !== 'Large Icons' ? 'none' : `url(${imageUrl})`}`,
+                    backgroundImage: `${viewStyle !== 'Large Icons' ? 'none' : `url(${bgImageUrl})`}`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     filter: 'blur(6px) brightness(0.3) saturate(0.8)',
