@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
@@ -47,7 +47,6 @@ function normalizeScores(input) {
 
 function UserAccount() {
     const { authUser, logout } = useAuth();
-    const [scores, setScores] = useState([]);
     const { id } = useParams();
     const profileId = id;
 
@@ -67,6 +66,8 @@ function UserAccount() {
     const listRef = useRef(null);
     const [filterType, setFilterType] = useState("defuser");
     const [filterConfidence, setFilterConfidence] = useState("Confident");
+
+    const [localScores, setLocalScores] = useState({});
 
     const {
         data: profileUser,
@@ -104,7 +105,9 @@ function UserAccount() {
         staleTime: 1000 * 60 * 5,
     });
 
-    const scoresObj = normalizeScores(fetchedScoresArray);
+    useEffect(() => {
+        setLocalScores(normalizeScores(fetchedScoresArray));
+    }, [fetchedScoresArray]);
 
     const { data: modules = [], isLoading: modulesLoading } = useQuery({
         queryKey: ["modules"],
@@ -137,7 +140,7 @@ function UserAccount() {
         defuser: { Confident: 0, Attempted: 0, Unknown: 0, Avoid: 0 },
         expert: { Confident: 0, Attempted: 0, Unknown: 0, Avoid: 0 },
     };
-    Object.values(scoresObj).forEach((score) => {
+    Object.values(localScores).forEach((score) => {
         stats.defuser[score.defuserConfidence || "Unknown"]++;
         stats.expert[score.expertConfidence || "Unknown"]++;
     });
@@ -146,7 +149,7 @@ function UserAccount() {
     stats.expert.Unknown = totalModules - (stats.expert.Confident + stats.expert.Attempted + stats.expert.Avoid);
 
     const filteredModules = modules.filter((module) => {
-        const score = scoresObj[module.module_id] || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
+        const score = localScores[module.module_id] || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
         return filterType === "defuser" ? score.defuserConfidence === filterConfidence
             : filterType === "expert" ? score.expertConfidence === filterConfidence
                 : filterType === "solo" ? score.canSolo : true;
@@ -407,8 +410,9 @@ function UserAccount() {
                                         index={index}
                                         user={profileUser}
                                         authUser={authUser}
-                                        score={scoresObj[module.module_id]}
-                                        setScores={setScores}
+                                        score={localScores[module.module_id]}
+                                        setScores={setLocalScores}
+                                        refetchScores={refetchScores}
                                     />
                                 </div>
                             );

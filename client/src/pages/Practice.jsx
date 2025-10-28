@@ -9,7 +9,7 @@ export default function Practice() {
     const [difficulty, setDifficulty] = useState(5);
     const [bombSize, setBombSize] = useState(7);
     const [incremental, setIncremental] = useState(true);
-    const [needys, setNeedys] = useState(false);
+    const [needies, setNeedies] = useState(false);
     const [bosses, setBosses] = useState(false);
     const [prioritizeOlder, setPrioritizeOlder] = useState(false);
     const [output, setOutput] = useState([]);
@@ -105,8 +105,8 @@ export default function Practice() {
 
 
                             <div style={{ display: "flex", alignItems: "center" }}>
-                                <Typography>Allow Needys</Typography>
-                                <Checkbox checked={needys} onChange={e => setNeedys(e.target.checked)} />
+                                <Typography>Allow Needies</Typography>
+                                <Checkbox checked={needies} onChange={e => setNeedies(e.target.checked)} />
                             </div>
 
                             <div style={{ display: "flex", alignItems: "center" }}>
@@ -141,7 +141,7 @@ export default function Practice() {
                                         size="small"
                                         onClick={() =>
                                             navigator.clipboard.writeText(
-                                                formatDMGString(output, repetitions, incremental, needys, bosses)
+                                                formatDMGString(output, repetitions, incremental, needies, bosses)
                                             )
                                         }
                                         sx={{
@@ -159,7 +159,7 @@ export default function Practice() {
                                         <ContentCopyIcon fontSize="small" />
                                     </Button>
 
-                                    {formatDMGString(output, repetitions, incremental, needys, bosses)}
+                                    {formatDMGString(output, repetitions, incremental, needies, bosses)}
                                 </Box>
                             ) : (
                                 <Typography>No modules generated yet.</Typography>
