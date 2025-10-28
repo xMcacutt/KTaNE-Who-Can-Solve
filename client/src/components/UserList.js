@@ -27,13 +27,25 @@ export function useDebounce(value, delay) {
 }
 
 export default function UserList() {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [hoveredIndex, setHoveredIndex] = useState(null);
-    const [visibleRows, setVisibleRows] = useState(new Set());
-    const [sortType, setSortType] = useState("combined");
+    let savedFilters = {};
+    try {
+        savedFilters = JSON.parse(localStorage.getItem("user_filters")) || {};
+    } catch {
+        savedFilters = {};
+    }
+    const [sortType, setSortType] = useState(savedFilters.sort || "combined");
+    const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("user_search") || "");
+
+    useEffect(() => {
+        const filters = { sortType };
+        localStorage.setItem("user_filters", JSON.stringify(filters));
+    }, [sortType]);
+
+    useEffect(() => {
+        sessionStorage.setItem("user_search", searchTerm);
+    }, [searchTerm]);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 100);
-    const listRef = useRef(null);
 
     const {
         data: users = [],

@@ -75,13 +75,35 @@ export default function ModuleList() {
         if (userScores) setScores(userScores);
     }, [userScores]);
 
-    const [searchTerm, setSearchTerm] = useState("");
+    let savedFilters = {};
+    try {
+        savedFilters = JSON.parse(localStorage.getItem("module_filters")) || {};
+    } catch {
+        savedFilters = {};
+    }
+
+    const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("module_search") || "");
     const debouncedSearchTerm = useDebounce(searchTerm, 100);
-    const [sortBy, setSortBy] = useState("name");
-    const [sortOrder, setSortOrder] = useState("asc");
-    const [searchFields, setSearchFields] = useState(["name", "description"]);
-    const [confidenceFilter, setConfidenceFilter] = useState(fullConfidenceOptions);
-    const [difficultyFilter, setDifficultyFilter] = useState(fullDifficultyOptions);
+    const [sortBy, setSortBy] = useState(savedFilters.sortBy || "name");
+    const [sortOrder, setSortOrder] = useState(savedFilters.sortOrder || "asc");
+    const [searchFields, setSearchFields] = useState(savedFilters.searchFields || ["name", "description"]);
+    const [confidenceFilter, setConfidenceFilter] = useState(savedFilters.confidenceFilter || fullConfidenceOptions);
+    const [difficultyFilter, setDifficultyFilter] = useState(savedFilters.difficultyFilter || fullDifficultyOptions);
+
+    useEffect(() => {
+        const filters = {
+            sortBy,
+            sortOrder,
+            searchFields,
+            confidenceFilter,
+            difficultyFilter,
+        };
+        localStorage.setItem("module_filters", JSON.stringify(filters));
+    }, [sortBy, sortOrder, searchFields, confidenceFilter, difficultyFilter]);
+
+    useEffect(() => {
+        sessionStorage.setItem("module_search", searchTerm);
+    }, [searchTerm]);
 
     const toggleConfidence = (value) => {
         setConfidenceFilter((prev) =>

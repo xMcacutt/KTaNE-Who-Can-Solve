@@ -18,11 +18,26 @@ export function useDebounce(value, delay) {
 }
 
 export default function BombList() {
-    const [sort, setSort] = useState("date_added");
-    const [order, setOrder] = useState("ascending");
-    const [favesFilter, setFavesFilter] = useState("all");
-    const [searchTerm, setSearchTerm] = useState("");
+    let savedFilters = {};
+    try {
+        savedFilters = JSON.parse(localStorage.getItem("mission_filters")) || {};
+    } catch {
+        savedFilters = {};
+    }
+    const [sort, setSort] = useState(savedFilters.sort || "date_added");
+    const [order, setOrder] = useState(savedFilters.order || "ascending");
+    const [favesFilter, setFavesFilter] = useState(savedFilters.favesFilter || "all");
+    const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("bomb_search") || "");
     const [panelOpen, setPanelOpen] = useState(false);
+
+    useEffect(() => {
+        const filters = { sort, order, favesFilter, searchTerm };
+        localStorage.setItem("mission_filters", JSON.stringify(filters));
+    }, [sort, order, favesFilter, searchTerm]);
+
+    useEffect(() => {
+        sessionStorage.setItem("bomb_search", searchTerm);
+    }, [searchTerm]);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 100);
 
