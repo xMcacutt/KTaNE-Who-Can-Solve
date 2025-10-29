@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Box, Typography, Tabs, Tab, Link, Chip, Grid, Card, FormControl, Avatar, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Link, Chip, useTheme, useMediaQuery, Grid, Card, FormControl, Avatar, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useActiveUsers } from "../context/ActiveUsersContext";
 import UserPanel from "../components/UserPanel";
@@ -18,6 +18,8 @@ const getHeatmapColor = (module) => {
 };
 
 function ModuleChip({ module, probability, viewStyle, users, authUser }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const encodedModuleName = encodeURIComponent(module.icon_file_name || module.name).replace(/'/g, "\\'");
     const [bgImageUrl, setBgImageUrl] = useState('');
     const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
@@ -95,17 +97,18 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
         };
     }
 
-    const avatarSize = userCount === 1 ? 72 : userCount === 2 ? 64 : userCount === 3 ? 56 : 48;
+    const avatarSize = isMobile ? (userCount === 1 ? 64 : userCount === 2 ? 56 : userCount === 3 ? 48 : 40)
+        : (userCount === 1 ? 72 : userCount === 2 ? 64 : userCount === 3 ? 56 : 48);
     const borderWidth = userCount <= 2 ? 4 : 3;
 
     return (
         <Card
             sx={{
                 position: 'relative',
-                borderRadius: 2,
+                borderRadius: 1,
                 overflow: 'hidden',
                 aspectRatio: '1 / 1',
-                width: 300,
+                width: isMobile ? 180 : 300,
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
@@ -150,9 +153,9 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                     {viewStyle === 'Small Icons' && (
                         <Box
                             sx={{
-                                width: 40,
-                                height: 40,
-                                backgroundImage: `url(${imageUrl})`,
+                                width: isMobile ? 32 : 40,
+                                height: isMobile ? 32 : 40,
+                                backgroundImage: `url(${bgImageUrl})`,
                                 backgroundSize: 'contain',
                                 backgroundRepeat: 'no-repeat',
                                 backgroundPosition: 'center',
@@ -160,7 +163,7 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                         />
                     )}
                     <Link href={manualUrl}>
-                        <Typography variant="h6" fontSize="1.4rem">{truncate(module.name, 21)}</Typography>
+                        <Typography variant="h6" fontSize={isMobile ? "0.6rem" : "1.4rem"}>{truncate(module.name, 21)}</Typography>
                     </Link>
                 </Box>
 
@@ -223,7 +226,10 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                             bottom: 8,
                             left: 8,
                             borderRadius: 1,
+                            textAlign: 'center',
+                            height: isMobile ? 15 : 25,
                             padding: 0.5,
+                            fontSize: isMobile ? "0.7rem" : "1rem"
                         }} />
                 )
             }
@@ -236,7 +242,10 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                             bottom: 8,
                             left: 8,
                             borderRadius: 1,
+                            textAlign: 'center',
+                            height: isMobile ? 15 : 25,
                             padding: 0.5,
+                            fontSize: isMobile ? "0.7rem" : "1rem"
                         }} />
                 )
             }
@@ -249,8 +258,8 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                     position: 'absolute',
                     bottom: 8,
                     right: 8,
-                    width: 32,
-                    height: 32,
+                    width: isMobile ? 24 : 32,
+                    height: isMobile ? 24 : 32,
                     borderRadius: 1,
                     padding: 0.5,
                 }}
@@ -261,6 +270,8 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
 
 
 function BombView({ bomb, viewStyle, filter, users }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const { authUser } = useAuth();
 
     const allModuleIds = [...new Set(bomb.pools?.flatMap((pool) => pool.modules) || [])];
@@ -437,10 +448,10 @@ function BombView({ bomb, viewStyle, filter, users }) {
                                     variant="caption"
                                     sx={{
                                         position: 'absolute',
-                                        top: -27.5,
+                                        top: isMobile ? -20 : -27.5,
                                         left: 20,
                                         fontWeight: 'bold',
-                                        fontSize: 30,
+                                        fontSize: isMobile ? 20 : 30,
                                         boxShadow: 1,
                                     }}
                                 >

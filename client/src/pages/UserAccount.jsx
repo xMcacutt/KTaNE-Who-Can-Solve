@@ -4,6 +4,7 @@ import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
 import { AutoSizer, List, CellMeasurer, CellMeasurerCache } from "react-virtualized";
 import ModuleCard from "../components/ModuleCard";
+import ModuleCardMobile from "../components/ModuleCardMobile";
 import { useAuth } from "../context/AuthContext";
 import { Virtuoso } from "react-virtuoso";
 
@@ -26,6 +27,8 @@ import {
     RadioGroup,
     FormControlLabel,
     Radio,
+    useTheme,
+    useMediaQuery
 } from "@mui/material";
 
 function normalizeScores(input) {
@@ -46,7 +49,9 @@ function normalizeScores(input) {
 }
 
 function UserAccount() {
-    const { authUser, logout } = useAuth();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+    const { authUser, handleLogout } = useAuth();
     const { id } = useParams();
     const profileId = id;
 
@@ -106,7 +111,9 @@ function UserAccount() {
     });
 
     useEffect(() => {
-        setLocalScores(normalizeScores(fetchedScoresArray));
+        if (Array.isArray(fetchedScoresArray)) {
+            setLocalScores(normalizeScores(fetchedScoresArray));
+        }
     }, [fetchedScoresArray]);
 
     const { data: modules = [], isLoading: modulesLoading } = useQuery({
@@ -126,9 +133,9 @@ function UserAccount() {
         }
         if (window.confirm("Are you sure you want to delete all your data? This cannot be undone.")) {
             try {
-                logout();
                 const res = await axios.delete(`/api/users/${authUser.id}/delete`, { withCredentials: true });
                 alert(res.data.message);
+                await handleLogout();
             } catch (error) {
                 console.error("Failed to delete account:", error);
                 alert("Failed to delete data. Please try again.");
@@ -250,8 +257,7 @@ function UserAccount() {
             display="flex"
             flexDirection="column"
             sx={{
-                height: "100%",
-                overflow: "hidden",
+                height: "150%",
             }}
         >
             <Box sx={{ flexShrink: 0, p: 2 }}>
@@ -267,31 +273,37 @@ function UserAccount() {
                 </Typography>
 
                 <Stack direction="row" spacing={2} my={2}>
-                    {isOwnAccount && (
+                    {isOwnAccount && !isMobile && (
                         <>
                             <Button
                                 variant="contained"
+                                sx={{ height: "55" }}
                                 onClick={() => handleOpenDialog("profile")}
                             >
                                 Upload Profile
                             </Button>
                             <Button
                                 variant="contained"
+                                sx={{ height: "55" }}
                                 onClick={() => handleOpenDialog("log")}
                             >
                                 Upload Log
                             </Button>
                         </>
                     )}
-                    <Button
-                        variant="outlined"
-                        onClick={handleDownloadProfile}
-                    >
-                        Download Profile
-                    </Button>
+                    {
+                        !isMobile &&
+                        <Button
+                            variant="outlined"
+                            sx={{ height: "55" }}
+                            onClick={handleDownloadProfile}
+                        >
+                            Download Profile
+                        </Button>
+                    }
 
                     {isOwnAccount ? (
-                        <Button variant="contained" color="error" onClick={handleDeleteAccount}>
+                        <Button variant="contained" color="error" onClick={handleDeleteAccount} sx={{ height: "55" }}>
                             Delete My Data
                         </Button>
                     ) : null}
@@ -348,8 +360,8 @@ function UserAccount() {
                             <Stack direction="row" spacing={3} mt={1}>
                                 {Object.keys(stats.defuser).map((key) => (
                                     <Stack direction="row" alignItems="center" key={key} spacing={1}>
-                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.2em" }} />
-                                        <Typography variant="body2">{stats.defuser[key]}/{totalModules}</Typography>
+                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.1em" }} />
+                                        <Typography variant="body2">{stats.defuser[key]}</Typography>
                                     </Stack>
                                 ))}
                             </Stack>
@@ -360,8 +372,8 @@ function UserAccount() {
                             <Stack direction="row" spacing={3} mt={1}>
                                 {Object.keys(stats.expert).map((key) => (
                                     <Stack direction="row" alignItems="center" key={key} spacing={1}>
-                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.2em" }} />
-                                        <Typography variant="body2">{stats.expert[key]}/{totalModules}</Typography>
+                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.1em" }} />
+                                        <Typography variant="body2">{stats.expert[key]}</Typography>
                                     </Stack>
                                 ))}
                             </Stack>
@@ -393,27 +405,40 @@ function UserAccount() {
                 </Stack>
             </Box>
 
-            <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
+            <Box sx={{ flexGrow: 1, mb: 2 }}>
                 {filteredModules.length > 0 ? (
                     <Virtuoso
-                        style={{ height: "97%", width: "100%" }}
+                        style={{ width: "100%" }}
                         totalCount={filteredModules.length}
                         itemContent={(index) => {
                             const module = filteredModules[index];
                             if (!module) return null;
-
                             return (
                                 <div style={{ paddingBottom: 16 }}>
-                                    <ModuleCard
-                                        key={module.id}
-                                        module={module}
-                                        index={index}
-                                        user={profileUser}
-                                        authUser={authUser}
-                                        score={localScores[module.module_id]}
-                                        setScores={setLocalScores}
-                                        refetchScores={refetchScores}
-                                    />
+                                    {
+                                        isMobile &&
+                                        <ModuleCardMobile
+                                            module={module}
+                                            index={index}
+                                            user={authUser}
+                                            authUser={authUser}
+                                            score={localScores[module.module_id]}
+                                            setScores={setLocalScores}
+                                            refetchScores={refetchScores}
+                                        />
+                                    }
+                                    {
+                                        !isMobile &&
+                                        <ModuleCard
+                                            module={module}
+                                            index={index}
+                                            user={authUser}
+                                            authUser={authUser}
+                                            score={localScores[module.module_id]}
+                                            setScores={setLocalScores}
+                                            refetchScores={refetchScores}
+                                        />
+                                    }
                                 </div>
                             );
                         }}

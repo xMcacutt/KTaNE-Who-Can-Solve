@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Virtuoso } from 'react-virtuoso';
 import ModuleCard from "./ModuleCard";
+import ModuleCardMobile from "./ModuleCardMobile";
 import {
     Box,
     Typography,
@@ -13,10 +14,17 @@ import {
     Select,
     MenuItem,
     Checkbox,
+    useTheme,
+    useMediaQuery,
     ListItemText,
     OutlinedInput,
+    Accordion,
+    AccordionDetails,
+    AccordionSummary
+
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 const searchFieldsOptions = ["name", "description", "author", "tags"];
 const difficultyOptions = ["Trivial", "VeryEasy", "Easy", "Medium", "Hard", "VeryHard", "Extreme"];
@@ -44,6 +52,9 @@ export function useDebounce(value, delay) {
 }
 
 export default function ModuleList() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
     const { authUser, logout } = useAuth();
     const [scores, setScores] = useState({});
 
@@ -254,6 +265,131 @@ export default function ModuleList() {
         </Box>
     );
 
+    const Controls = (
+        <Box display="flex" gap={2} m={2} flexWrap="wrap">
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+                <InputLabel>Sort By</InputLabel>
+                <Select
+                    label="Sort By"
+                    displayEmpty
+                    sx={{
+                        width: (theme) => theme.typography.fontSize * 11,
+                    }}
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                >
+                    <MenuItem value="name">Name</MenuItem>
+                    <MenuItem value="date">Date</MenuItem>
+                    <MenuItem value="difficulty">Difficulty</MenuItem>
+                    <MenuItem value="popularity">Popularity</MenuItem>
+                </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+                <InputLabel>Order</InputLabel>
+                <Select
+                    label="Order"
+                    displayEmpty
+                    sx={{
+                        width: (theme) => theme.typography.fontSize * 11,
+                    }}
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value)}
+                >
+                    <MenuItem value="asc">Ascending</MenuItem>
+                    <MenuItem value="desc">Descending</MenuItem>
+                </Select>
+            </FormControl>
+            <FormControl size="small">
+                <InputLabel>Search Fields</InputLabel>
+                <Select
+                    label="Search Fields"
+                    displayEmpty
+                    sx={{
+                        width: (theme) => theme.typography.fontSize * 11,
+                    }}
+                    multiple
+                    value={searchFields}
+                    onChange={(e) => setSearchFields(e.target.value)}
+                    input={<OutlinedInput label="Search Fields" />}
+                    renderValue={(selected) => selected.join(", ")}
+                >
+                    {searchFieldsOptions.map((field) => (
+                        <MenuItem key={field} value={field}>
+                            <Checkbox checked={searchFields.includes(field)} />
+                            <ListItemText primary={field} />
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
+            {authUser && (
+
+                <FormControl size="small">
+                    <InputLabel>Confidence</InputLabel>
+                    <Select
+                        label="Confidence"
+                        multiple
+                        value={confidenceFilter}
+                        onChange={(e) => setConfidenceFilter(e.target.value || [])}
+                        input={<OutlinedInput label="Confidence" />}
+                        renderValue={(selected) =>
+                            <Typography variant="body2" noWrap>
+                                {renderMultiSelectValue(selected, fullConfidenceOptions, 'Confidences')}
+                            </Typography>
+                        }
+                        sx={{
+                            width: (theme) => theme.typography.fontSize * 15,
+                        }}
+                        MenuProps={{
+                            MenuListProps: {
+                                component: 'div',
+                            },
+                            PaperProps: {
+                                sx: {
+                                    minWidth: (theme) => theme.typography.fontSize * 15,
+                                },
+                            },
+                        }}
+                    >
+                        <ConfidenceMenuContent
+                            confidenceFilter={confidenceFilter}
+                            toggleConfidence={toggleConfidence}
+                        />
+                    </Select>
+                </FormControl>
+            )}
+            <FormControl size="small">
+                <InputLabel>Difficulty</InputLabel>
+                <Select
+                    label="Difficulty"
+                    multiple
+                    value={difficultyFilter}
+                    onChange={(e) => setDifficultyFilter(e.target.value || [])}
+                    input={<OutlinedInput label="Difficulty" />}
+                    renderValue={(selected) =>
+                        <Typography variant="body2" noWrap>
+                            {renderMultiSelectValue(selected, fullDifficultyOptions, 'Difficulties')}
+                        </Typography>
+                    }
+                    sx={{
+                        width: (theme) => theme.typography.fontSize * 15,
+                    }}
+                    MenuProps={{
+                        PaperProps: {
+                            sx: {
+                                minWidth: (theme) => theme.typography.fontSize * 15,
+                            },
+                        },
+                    }}
+                >
+                    <DifficultyMenuContent
+                        difficultyFilter={difficultyFilter}
+                        toggleDifficulty={toggleDifficulty}
+                    />
+                </Select>
+            </FormControl>
+        </Box>
+    )
+
     return (
         <Box
             display="flex"
@@ -276,128 +412,20 @@ export default function ModuleList() {
                     size="small"
                     sx={{ mb: 2 }}
                 />
-                <Box display="flex" gap={2} mb={2} flexWrap="wrap">
-                    <FormControl size="small" sx={{ minWidth: 100 }}>
-                        <InputLabel>Sort By</InputLabel>
-                        <Select
-                            label="Sort By"
-                            displayEmpty
-                            sx={{
-                                width: (theme) => theme.typography.fontSize * 11,
-                            }}
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
+                {isMobile ? (
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ArrowDownwardIcon />}
+                            aria-controls="options-panel-content"
+                            id="options-panel-header"
                         >
-                            <MenuItem value="name">Name</MenuItem>
-                            <MenuItem value="date">Date</MenuItem>
-                            <MenuItem value="difficulty">Difficulty</MenuItem>
-                            <MenuItem value="popularity">Popularity</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl size="small" sx={{ minWidth: 100 }}>
-                        <InputLabel>Order</InputLabel>
-                        <Select
-                            label="Order"
-                            displayEmpty
-                            sx={{
-                                width: (theme) => theme.typography.fontSize * 11,
-                            }}
-                            value={sortOrder}
-                            onChange={(e) => setSortOrder(e.target.value)}
-                        >
-                            <MenuItem value="asc">Ascending</MenuItem>
-                            <MenuItem value="desc">Descending</MenuItem>
-                        </Select>
-                    </FormControl>
-                    <FormControl size="small">
-                        <InputLabel>Search Fields</InputLabel>
-                        <Select
-                            label="Search Fields"
-                            displayEmpty
-                            sx={{
-                                width: (theme) => theme.typography.fontSize * 11,
-                            }}
-                            multiple
-                            value={searchFields}
-                            onChange={(e) => setSearchFields(e.target.value)}
-                            input={<OutlinedInput label="Search Fields" />}
-                            renderValue={(selected) => selected.join(", ")}
-                        >
-                            {searchFieldsOptions.map((field) => (
-                                <MenuItem key={field} value={field}>
-                                    <Checkbox checked={searchFields.includes(field)} />
-                                    <ListItemText primary={field} />
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    {authUser && (
-
-                        <FormControl size="small">
-                            <InputLabel>Confidence</InputLabel>
-                            <Select
-                                label="Confidence"
-                                multiple
-                                value={confidenceFilter}
-                                onChange={(e) => setConfidenceFilter(e.target.value || [])}
-                                input={<OutlinedInput label="Confidence" />}
-                                renderValue={(selected) =>
-                                    <Typography variant="body2" noWrap>
-                                        {renderMultiSelectValue(selected, fullConfidenceOptions, 'Confidences')}
-                                    </Typography>
-                                }
-                                sx={{
-                                    width: (theme) => theme.typography.fontSize * 15,
-                                }}
-                                MenuProps={{
-                                    MenuListProps: {
-                                        component: 'div',
-                                    },
-                                    PaperProps: {
-                                        sx: {
-                                            minWidth: (theme) => theme.typography.fontSize * 15,
-                                        },
-                                    },
-                                }}
-                            >
-                                <ConfidenceMenuContent
-                                    confidenceFilter={confidenceFilter}
-                                    toggleConfidence={toggleConfidence}
-                                />
-                            </Select>
-                        </FormControl>
-                    )}
-                    <FormControl size="small">
-                        <InputLabel>Difficulty</InputLabel>
-                        <Select
-                            label="Difficulty"
-                            multiple
-                            value={difficultyFilter}
-                            onChange={(e) => setDifficultyFilter(e.target.value || [])}
-                            input={<OutlinedInput label="Difficulty" />}
-                            renderValue={(selected) =>
-                                <Typography variant="body2" noWrap>
-                                    {renderMultiSelectValue(selected, fullDifficultyOptions, 'Difficulties')}
-                                </Typography>
-                            }
-                            sx={{
-                                width: (theme) => theme.typography.fontSize * 15,
-                            }}
-                            MenuProps={{
-                                PaperProps: {
-                                    sx: {
-                                        minWidth: (theme) => theme.typography.fontSize * 15,
-                                    },
-                                },
-                            }}
-                        >
-                            <DifficultyMenuContent
-                                difficultyFilter={difficultyFilter}
-                                toggleDifficulty={toggleDifficulty}
-                            />
-                        </Select>
-                    </FormControl>
-                </Box>
+                            <Typography>Filter & Sort</Typography>
+                        </AccordionSummary>
+                        {Controls}
+                    </Accordion>
+                ) : (
+                    Controls
+                )}
             </Box>
             <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
                 {isLoading && (
@@ -421,15 +449,28 @@ export default function ModuleList() {
                             const module = modules[index];
                             return (
                                 <div style={{ paddingBottom: 16 }}>
-                                    <ModuleCard
-                                        key={module.id}
-                                        module={module}
-                                        index={index}
-                                        user={authUser}
-                                        authUser={authUser}
-                                        score={scores[module.module_id]}
-                                        setScores={setScores}
-                                    />
+                                    {
+                                        isMobile &&
+                                        <ModuleCardMobile
+                                            module={module}
+                                            index={index}
+                                            user={authUser}
+                                            authUser={authUser}
+                                            score={scores[module.module_id]}
+                                            setScores={setScores}
+                                        />
+                                    }
+                                    {
+                                        !isMobile &&
+                                        <ModuleCard
+                                            module={module}
+                                            index={index}
+                                            user={authUser}
+                                            authUser={authUser}
+                                            score={scores[module.module_id]}
+                                            setScores={setScores}
+                                        />
+                                    }
                                 </div>
                             );
                         }}

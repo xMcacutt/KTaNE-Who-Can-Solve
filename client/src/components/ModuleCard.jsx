@@ -77,8 +77,8 @@ function ModuleCard({
         >
             <CardContent>
                 <Grid container alignItems="stretch">
-                    <Grid item xs={12} sx={{ pl: 1 }} md={9} width="75%" >
-                        <Box display="flex" alignItems="center" height="100%">
+                    <Grid item xs={12} sx={{ pl: 1 }} md={9} flexGrow={1} size={3}>
+                        <Box display="flex" alignItems="center" height="100%" mr="30">
                             <Box
                                 component="img"
                                 src={imageUrl}
@@ -117,7 +117,7 @@ function ModuleCard({
                         </Box>
                     </Grid>
 
-                    <Grid item xs={12} md={3} width="25%" sx={{
+                    <Grid item xs={12} md={3} sx={{
                         display: "flex",
                         pr: 1,
                         justifyContent: "flex-end",
@@ -130,6 +130,7 @@ function ModuleCard({
                             justifyContent="flex-end"
                             gap={2}
                             width="100%"
+                            flexGrow={1}
                         >
                             {user ? (
                                 <Box display="flex" flexDirection={{ xs: "column", sm: "row" }} alignItems="center" gap={2}>
@@ -143,7 +144,7 @@ function ModuleCard({
                                         }
                                         label="Can Solo"
                                         labelPlacement="top"
-                                        sx={{ m: 0 }}
+                                        sx={{ m: 0, whiteSpace: "nowrap"}}
                                     />
                                     <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
                                         <Box display="flex" alignItems="center">
@@ -199,8 +200,8 @@ function ModuleCard({
                                     </Box>
                                 </Box>
                             ) : (
-                                <Typography variant="body2" align="center" fontStyle="italic">
-                                    Log in to view and edit confidence scores
+                                <Typography variant="body2" align="center" fontStyle="italic" flexWrap="wrap">
+                                    Log in to edit scores
                                 </Typography>
                             )}
                         </Box>

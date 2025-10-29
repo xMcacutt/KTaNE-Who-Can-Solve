@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { IconButton, Box, MenuItem, Select, InputLabel, FormControl, Typography, TextField, CircularProgress, Alert } from "@mui/material";
+import { IconButton, Box, MenuItem, Select, Accordion, AccordionDetails, AccordionSummary, InputLabel, useTheme, useMediaQuery, FormControl, Typography, TextField, CircularProgress, Alert } from "@mui/material";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useQuery } from "@tanstack/react-query";
 import { Virtuoso } from "react-virtuoso";
@@ -7,6 +7,7 @@ import UserPanel from "./UserPanel";
 import BombCard from "./BombCard";
 import { useAuth } from "../context/AuthContext";
 import { useActiveUsers } from "../context/ActiveUsersContext";
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
 export function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -18,6 +19,9 @@ export function useDebounce(value, delay) {
 }
 
 export default function BombList() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
     let savedFilters = {};
     try {
         savedFilters = JSON.parse(localStorage.getItem("mission_filters")) || {};
@@ -101,6 +105,49 @@ export default function BombList() {
         enabled: !!authUser,
     });
 
+    const Controls = (
+        <Box display="flex" gap={2} m={2} flexWrap="wrap">
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Sort by</InputLabel>
+                <Select
+                    label="Sort by"
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                >
+                    <MenuItem value="date_added">Date Published</MenuItem>
+                    <MenuItem value="mission_name">Alphabetical</MenuItem>
+                    <MenuItem value="difficulty">Difficulty</MenuItem>
+                    <MenuItem value="known_modules">Known Modules (Team)</MenuItem>
+                </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Order</InputLabel>
+                <Select
+                    label="Order"
+                    value={order}
+                    onChange={(e) => setOrder(e.target.value)}
+                >
+                    <MenuItem value="descending">Descending</MenuItem>
+                    <MenuItem value="ascending">Ascending</MenuItem>
+                </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Favourites</InputLabel>
+                <Select
+                    label="Favourites"
+                    value={favesFilter}
+                    onChange={(e) => setFavesFilter(e.target.value)}
+                >
+                    <MenuItem value="all">Show All</MenuItem>
+                    <MenuItem value="no_faves">No Favourites</MenuItem>
+                    <MenuItem value="only_faves">Only Favourites</MenuItem>
+                </Select>
+            </FormControl>
+        </Box>
+    )
+
     useEffect(() => {
         if (!authUser) return;
 
@@ -142,64 +189,32 @@ export default function BombList() {
             }}
         >
             <Box sx={{ flexShrink: 0, p: 2 }}>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h5" fontWeight={600} mb={2}>Missions</Typography>
-                    {authUser && (
-                        <IconButton onClick={() => setPanelOpen(true)}>
-                            <GroupAddIcon />
-                        </IconButton>
-                    )}
-                </Box>
-
-                <Box display="flex" gap={2} mb={2}>
-                    <TextField
-                        fullWidth
-                        placeholder="Search missions..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        variant="outlined"
-                        size="small"
-                    />
-
-                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                        <InputLabel>Sort by</InputLabel>
-                        <Select
-                            label="Sort by"
-                            value={sort}
-                            onChange={(e) => setSort(e.target.value)}
+                <Typography variant="h5" fontWeight={600} mb={2}>
+                    Modules
+                </Typography>
+                <TextField
+                    fullWidth
+                    placeholder="Search modules..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    sx={{ mb: 2 }}
+                />
+                {isMobile ? (
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ArrowDownwardIcon />}
+                            aria-controls="options-panel-content"
+                            id="options-panel-header"
                         >
-                            <MenuItem value="date_added">Date Published</MenuItem>
-                            <MenuItem value="mission_name">Alphabetical</MenuItem>
-                            <MenuItem value="difficulty">Difficulty</MenuItem>
-                            <MenuItem value="known_modules">Known Modules (Team)</MenuItem>
-                        </Select>
-                    </FormControl>
-
-                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                        <InputLabel>Order</InputLabel>
-                        <Select
-                            label="Order"
-                            value={order}
-                            onChange={(e) => setOrder(e.target.value)}
-                        >
-                            <MenuItem value="descending">Descending</MenuItem>
-                            <MenuItem value="ascending">Ascending</MenuItem>
-                        </Select>
-                    </FormControl>
-
-                    <FormControl size="small" sx={{ minWidth: 200 }}>
-                        <InputLabel>Favourites</InputLabel>
-                        <Select
-                            label="Favourites"
-                            value={favesFilter}
-                            onChange={(e) => setFavesFilter(e.target.value)}
-                        >
-                            <MenuItem value="all">Show All</MenuItem>
-                            <MenuItem value="no_faves">No Favourites</MenuItem>
-                            <MenuItem value="only_faves">Only Favourites</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Box>
+                            <Typography>Filter & Sort</Typography>
+                        </AccordionSummary>
+                        {Controls}
+                    </Accordion>
+                ) : (
+                    Controls
+                )}
             </Box>
             <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
                 {isLoading && (

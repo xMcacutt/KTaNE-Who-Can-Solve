@@ -37,5 +37,7 @@ export const difficultyMap = {
 };
 
 export const truncate = (str, n) => {
+    if (str == null)
+        return str;
     return str.length > n ? str.substr(0, n - 1) + "..." : str;
 };

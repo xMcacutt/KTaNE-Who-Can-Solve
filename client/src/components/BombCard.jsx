@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, Typography, Box, Link, Chip, Grid, CircularProgress, Avatar, IconButton } from "@mui/material";
+import { Card, CardContent, Typography, Box, Link, useTheme, useMediaQuery, Chip, Grid, CircularProgress, Avatar, IconButton } from "@mui/material";
 import StarIcon from "@mui/icons-material/StarBorder";
 import StarFilledIcon from "@mui/icons-material/Star";
 import { formatTime } from "../utility";
@@ -15,6 +15,8 @@ function BombCard({
     onFavouriteChanged,
     authUser,
 }) {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const missionPageUrl = {
         pathname: `/missions/${encodeURIComponent(mission.mission_name)}`,
         state: { mission, users },
@@ -114,28 +116,31 @@ function BombCard({
 
     return (
         <Card
-            sx={{ '&:hover': {
-                    backgroundColor: 'action.hover', 
+            sx={{
+                '&:hover': {
+                    backgroundColor: 'action.hover',
                     boxShadow: 6,
                 },
-                transition: 'background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',}}
+                transition: 'background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out',
+            }}
         >
             <CardContent>
-                <Grid container spacing={2} alignItems="center">
+                <Grid container spacing={3} alignItems="center">
                     {
                         authUser &&
-                        <Grid item size={0.3}>
+                        <Grid item xs={12}>
                             <IconButton onClick={handleFavouriteSet}>
                                 {isFavourite ? <StarFilledIcon /> : <StarIcon />}
                             </IconButton>
                         </Grid>
                     }
-                    <Grid item size={8.6} xs={12} md={9}>
+                    <Grid item xs={12} md={9}>
                         <Box display="flex" alignItems="center" gap={4}>
                             <Box ml={2}>
                                 <Link component={RouterLink} to={missionPageUrl}>
                                     <Typography variant="h6">{mission.mission_name}</Typography>
                                 </Link>
+                                <Typography variant="body2">By: {mission.authors?.join(", ") || "Unknown"} {formattedDate}</Typography>
                                 <Typography variant="body2">{mission.pack_name}</Typography>
                                 <Box
                                     id="chips"
@@ -144,12 +149,14 @@ function BombCard({
                                     gap={1}
                                     mt={1}
                                 >
-                                    <Chip label={`Authors: ${mission.authors?.join(", ") || "Unknown"}`} size="small" />
-                                    <Chip label={`Published: ${formattedDate}`} size="small" />
-                                    <Chip label={`Total Modules: ${totalModules}`} size="small" />
-                                    <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" />
+                                    <Chip label={`Total Modules: ${totalModules}`} size="small" sx={{pt: 0.35}}/>
+                                    <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" sx={{pt: 0.35}}/>
                                 </Box>
                             </Box>
+                        </Box>
+                    </Grid>
+                    <Grid item xs={12} md={3} flexGrow={1}>
+                        <Box display="flex" justifyContent="flex-start">
                             {
                                 authUser &&
                                 <Grid container spacing={1} sx={{ mt: 2 }}>
@@ -202,7 +209,7 @@ function BombCard({
                             }
                         </Box>
                     </Grid>
-                    <Grid item size={3} xs={12} md={3}>
+                    <Grid item xs={12} md={3}>
                         <Box
                             display="flex"
                             justifyContent="flex-end"
@@ -244,8 +251,8 @@ function BombCard({
                         </Box>
                     </Grid>
                 </Grid>
-            </CardContent>
-        </Card>
+            </CardContent >
+        </Card >
     );
 }
 
