@@ -81,10 +81,10 @@ router.get("/:id/download", async (req, res) => {
 
         const profileObj = {
             EnabledList: Array.from(enabled),
-            DisabledList: Array.from(disabled),
+            Operation: 0,
         };
 
-        const filename = `profile_${userId}_${Date.now()}.json`;
+        const filename = `profile_${userId}.json`;
 
         res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
         res.setHeader("Content-Type", "application/json");
