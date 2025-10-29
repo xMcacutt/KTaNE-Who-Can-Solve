@@ -58,7 +58,7 @@ export default function ModuleList() {
     const { authUser, logout } = useAuth();
     const [scores, setScores] = useState({});
 
-    const { data: userScores } = useQuery({
+    const { data: userScores, refetch: refetchScores } = useQuery({
         queryKey: ['scores', authUser?.id],
         queryFn: async () => {
             const res = await fetch(`/api/scores`, {
@@ -458,6 +458,7 @@ export default function ModuleList() {
                                             authUser={authUser}
                                             score={scores[module.module_id]}
                                             setScores={setScores}
+                                            refetchScores={refetchScores}
                                         />
                                     }
                                     {
@@ -469,6 +470,7 @@ export default function ModuleList() {
                                             authUser={authUser}
                                             score={scores[module.module_id]}
                                             setScores={setScores}
+                                            refetchScores={refetchScores}
                                         />
                                     }
                                 </div>
