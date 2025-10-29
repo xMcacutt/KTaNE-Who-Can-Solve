@@ -190,11 +190,11 @@ export default function BombList() {
         >
             <Box sx={{ flexShrink: 0, p: 2 }}>
                 <Typography variant="h5" fontWeight={600} mb={2}>
-                    Modules
+                    Missions
                 </Typography>
                 <TextField
                     fullWidth
-                    placeholder="Search modules..."
+                    placeholder="Search missions..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     variant="outlined"
