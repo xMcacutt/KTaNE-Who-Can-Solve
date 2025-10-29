@@ -149,8 +149,8 @@ function BombCard({
                                     gap={1}
                                     mt={1}
                                 >
-                                    <Chip label={`Total Modules: ${totalModules}`} size="small" sx={{pt: 0.35}}/>
-                                    <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" sx={{pt: 0.35}}/>
+                                    <Chip label={`Total Modules: ${totalModules}`} size="small" sx={{ pt: 0.35 }} />
+                                    <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" sx={{ pt: 0.35 }} />
                                 </Box>
                             </Box>
                         </Box>
@@ -176,6 +176,7 @@ function BombCard({
                                         const known = uniqueModuleIds.filter((moduleId) => {
                                             const userScores = Array.isArray(u.scores) ? u.scores : [];
                                             const s = userScores.find((sc) => sc.module_id === moduleId);
+                                            const moduleData = modulesData[moduleId];
 
                                             if (users.length === 1) {
                                                 const defConf =
@@ -185,6 +186,10 @@ function BombCard({
                                                     s?.expert_confidence === "Confident" ||
                                                     s?.expert_confidence === "Attempted";
                                                 return defConf && expConf;
+                                            }
+
+                                            if (!u.isDefuser && moduleData?.can_solo) {
+                                                return false;
                                             }
 
                                             const conf = u.isDefuser
@@ -225,8 +230,21 @@ function BombCard({
                                         if (!moduleData || !moduleData.icon_file_name) {
                                             return null;
                                         }
+
                                         const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
                                         const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
+                                        const localImageUrl = `/icons/${module.icon_file_name}.png`;
+
+                                        const handleImageError = (e) => {
+                                            const currentSrc = e.target.src;
+                                            if (currentSrc.includes('raw.githubusercontent.com')) {
+                                                e.target.src = localImageUrl;
+                                            } else {
+                                                e.target.src = "/icons/Unknown Module.png";
+                                                e.target.onerror = null;
+                                            }
+                                        };
+
                                         return (
                                             <Box
                                                 key={moduleId}
@@ -242,6 +260,7 @@ function BombCard({
                                                     zIndex: idx,
                                                     borderRadius: 2,
                                                 }}
+                                                onError={(e) => handleImageError(e)}
                                             />
                                         );
                                     })
