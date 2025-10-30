@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, Typography, Box, Link, useTheme, useMediaQuery, Chip, Grid, CircularProgress, Avatar, IconButton } from "@mui/material";
+import { Card, CardContent, Typography, Box, Stack, Link, useTheme, useMediaQuery, Chip, Grid, CircularProgress, Avatar, IconButton } from "@mui/material";
 import StarIcon from "@mui/icons-material/StarBorder";
 import StarFilledIcon from "@mui/icons-material/Star";
 import { formatTime } from "../utility";
@@ -15,6 +15,7 @@ function BombCard({
     onFavouriteChanged,
     authUser,
 }) {
+    const navigate = useNavigate();
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const missionPageUrl = {
@@ -116,6 +117,7 @@ function BombCard({
 
     return (
         <Card
+            onClick={() => navigate(missionPageUrl)}
             sx={{
                 '&:hover': {
                     backgroundColor: 'action.hover',
@@ -137,9 +139,7 @@ function BombCard({
                     <Grid item xs={12} md={9}>
                         <Box display="flex" alignItems="center" gap={4}>
                             <Box ml={2}>
-                                <Link component={RouterLink} to={missionPageUrl}>
-                                    <Typography variant="h6">{mission.mission_name}</Typography>
-                                </Link>
+                                <Typography variant="h6">{mission.mission_name}</Typography>
                                 <Typography variant="body2">By: {mission.authors?.join(", ") || "Unknown"} {formattedDate}</Typography>
                                 <Typography variant="body2">{mission.pack_name}</Typography>
                                 <Box
@@ -214,61 +214,52 @@ function BombCard({
                             }
                         </Box>
                     </Grid>
-                    <Grid item xs={12} md={3}>
-                        <Box
-                            display="flex"
-                            justifyContent="flex-end"
-                            alignItems="center"
-                            sx={{ height: '100%' }}
-                        >
-                            <Box sx={{ position: 'relative', width: 60, height: 40 }}>
-                                {isLoading ? (
-                                    <CircularProgress size={20} />
-                                ) : (
-                                    sortedModuleIds.map((moduleId, idx) => {
-                                        const moduleData = modulesData[moduleId];
-                                        if (!moduleData || !moduleData.icon_file_name) {
-                                            return null;
-                                        }
-
-                                        const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
-                                        const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
-                                        const localImageUrl = `/icons/${module.icon_file_name}.png`;
-
-                                        const handleImageError = (e) => {
-                                            const currentSrc = e.target.src;
-                                            if (currentSrc.includes('raw.githubusercontent.com')) {
-                                                e.target.src = localImageUrl;
-                                            } else {
-                                                e.target.src = "/icons/Unknown Module.png";
-                                                e.target.onerror = null;
-                                            }
-                                        };
-
-                                        return (
-                                            <Box
-                                                key={moduleId}
-                                                component="img"
-                                                src={imageUrl}
-                                                alt={moduleData?.name || moduleId}
-                                                sx={{
-                                                    width: 64,
-                                                    height: 64,
-                                                    position: 'absolute',
-                                                    right: idx * 45,
-                                                    filter: `brightness(${0.2 * (idx + 1)})`,
-                                                    zIndex: idx,
-                                                    borderRadius: 2,
-                                                }}
-                                                onError={(e) => handleImageError(e)}
-                                            />
-                                        );
-                                    })
-                                )
+                    <Stack item xs={12} md={3} direction="row" spacing={-2}>
+                        {isLoading ? (
+                            <CircularProgress size={20} />
+                        ) : (
+                            sortedModuleIds.reverse().map((moduleId, idx) => {
+                                const moduleData = modulesData[moduleId];
+                                if (!moduleData || !moduleData.icon_file_name) {
+                                    return null;
                                 }
-                            </Box>
-                        </Box>
-                    </Grid>
+
+                                const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
+                                const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
+                                const localImageUrl = `/icons/${module.icon_file_name}.png`;
+
+                                const handleImageError = (e) => {
+                                    const currentSrc = e.target.src;
+                                    if (currentSrc.includes('raw.githubusercontent.com')) {
+                                        e.target.src = localImageUrl;
+                                    } else {
+                                        e.target.src = "/icons/Unknown Module.png";
+                                        e.target.onerror = null;
+                                    }
+                                };
+
+                                return (
+                                    <Box
+                                        item
+                                        key={moduleId}
+                                        component="img"
+                                        src={imageUrl}
+                                        alt={moduleData?.name || moduleId}
+                                        sx={{
+                                            width: 64,
+                                            height: 64,
+                                            filter: `brightness(${0.2 * (5 - idx)})`,
+                                            zIndex: 5 - idx,
+                                            borderRadius: 2,
+                                            imageRendering: 'pixelated'
+                                        }}
+                                        onError={(e) => handleImageError(e)}
+                                    />
+                                );
+                            })
+                        )
+                        }
+                    </Stack>
                 </Grid>
             </CardContent >
         </Card >
