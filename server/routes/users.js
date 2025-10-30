@@ -81,6 +81,7 @@ router.get("/:id/download", async (req, res) => {
 
         const profileObj = {
             EnabledList: Array.from(enabled),
+            DisabledList: Array.from(disabled),
             Operation: 0,
         };
 
