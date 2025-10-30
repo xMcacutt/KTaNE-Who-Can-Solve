@@ -31,6 +31,7 @@ export default function Layout() {
         { label: "Users", to: "/users" },
         { label: "Bombs", to: "/bombs" },
         { label: "Privacy", href: "/privacy/Policy.html" },
+        { label: "Github", href: "https://ktanewhocansolve.com/" },
         ...(authUser ? [{ label: "Practice", to: "/practice" }] : []),
     ];
 
@@ -157,12 +158,12 @@ export default function Layout() {
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
             >
-                <Box sx={{ width: 225, p: 2 }} textAlign="center">
+                <Box sx={{ width: 245, p: 2 }} textAlign="center">
                     <Box
                         component="img"
                         src="/Logo Light.svg"
                         alt="Who Can Solve?"
-                        width={175}
+                        width={155}
                     />
                     <Divider sx={{ my: 2 }} />
                     <List sx={{ display: "flex", flexDirection: "column", gap: 1, justifyContent: "flex-end" }}>
