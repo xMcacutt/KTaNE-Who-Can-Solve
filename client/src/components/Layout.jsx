@@ -16,6 +16,7 @@ import {
     useTheme,
     Divider,
     Icon,
+    Typography,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 
@@ -136,7 +137,14 @@ export default function Layout() {
                                     "&:hover": { backgroundColor: "#4752c4" },
                                 }}
                             >
-                                Login with Discord
+                                <Box sx={{ display: "flex", alignItems: "center", gap:1}}>
+                                    OAuth Login
+                                    <Box
+                                        sx={{ height: "24", mb: 0.25 }}
+                                        component="img"
+                                        src={`/icons/menu_discord.svg`}
+                                    />
+                                </Box>
                             </Button>
                         </Box>
                     )}
@@ -178,11 +186,11 @@ export default function Layout() {
                                     onClick={() => setDrawerOpen(false)}
                                 >
                                     <Box sx={{ display: "flex", flexGrow: 1, alignItems: "center", flexDirection: "row", gap: 1, }}>
-                                        <Box 
-                                            sx={{ height: "24", mb: 0.5}}
-                                            component="img" 
+                                        <Box
+                                            sx={{ height: "24", mb: 0.5 }}
+                                            component="img"
                                             src={`/icons/menu_${item.label.toLowerCase()}.svg`}
-                                            
+
                                         />
                                         <ListItemText
                                             primary={item.label}

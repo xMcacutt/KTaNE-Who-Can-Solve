@@ -1,19 +1,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, useTheme, useMediaQuery, Box, Typography, Avatar, Stack, Grid } from "@mui/material";
+import { truncate } from "../utility"
+import { Card, CardContent, Box, Typography, Avatar, Stack, Grid } from "@mui/material";
 
 function UserCard({
     user,
     index,
     sortType,
 }) {
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const navigate = useNavigate();
 
     const renderConfidences = () => {
         return (
-            <Stack direction="row" spacing={3}>
+            <Stack direction="row" spacing={2}>
                 <Box>
                     <Typography variant="subtitle2">Defuser:</Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
@@ -22,7 +21,7 @@ function UserCard({
                                 component="img"
                                 src="icons/confident.png"
                                 alt="Confident"
-                                sx={{ height: isMobile ? "0.9em" : "1.2em" }}
+                                sx={{ height: "0.9em" }}
                             />
                             <Typography variant="body2">
                                 {user.defuser_confident}
@@ -33,7 +32,7 @@ function UserCard({
                                 component="img"
                                 src="icons/attempted.png"
                                 alt="Attempted"
-                                sx={{ height: isMobile ? "0.9em" : "1.2em" }}
+                                sx={{ height: "0.9em" }}
                             />
                             <Typography variant="body2">{user.defuser_attempted}</Typography>
                         </Stack>
@@ -47,7 +46,7 @@ function UserCard({
                                 component="img"
                                 src="icons/confident.png"
                                 alt="Confident"
-                                sx={{ height: isMobile ? "0.9em" : "1.2em" }}
+                                sx={{ height: "0.9em" }}
                             />
                             <Typography variant="body2">{user.expert_confident}</Typography>
                         </Stack>
@@ -56,7 +55,7 @@ function UserCard({
                                 component="img"
                                 src="icons/attempted.png"
                                 alt="Attempted"
-                                sx={{ height: isMobile ? "0.9em" : "1.2em" }}
+                                sx={{ height: "0.9em" }}
                             />
                             <Typography variant="body2">{user.expert_attempted}</Typography>
                         </Stack>
@@ -70,7 +69,7 @@ function UserCard({
                                 component="img"
                                 src="icons/confident.png"
                                 alt="Confident"
-                                sx={{ height: isMobile ? "0.9em" : "1.2em" }}
+                                sx={{ height: "0.9em" }}
                             />
                             <Typography variant="body2">{user.solo_count}</Typography>
                         </Stack>
@@ -83,13 +82,13 @@ function UserCard({
     const renderScore = () => {
         switch (sortType) {
             case "defuser":
-                return `Defuser Score: ${user.defuser_score}`;
+                return `Score: ${user.defuser_score}`;
             case "expert":
-                return `Expert Score: ${user.expert_score}`;
+                return `Score: ${user.expert_score}`;
             case "solo":
-                return `Solo Score: ${user.solo_score}`;
+                return `Score: ${user.solo_score}`;
             default:
-                return `Combined Score: ${user.combined_score}`;
+                return `Score: ${user.combined_score}`;
         }
     };
 
@@ -106,40 +105,25 @@ function UserCard({
         >
             <CardContent>
                 <Grid container spacing={2} justifyContent="space-between" alignItems="center">
-                    <Grid item sx={{ pl: isMobile ? 0 : 2 }}>
+                    <Grid item sx={{ pl: 1 }}>
                         <Stack direction="row" spacing={2} alignItems="center">
-                            <Avatar src={user.avatar} alt={user.name} sx={{ width: 48, height: 48 }} />
+                            <Avatar src={user.avatar} sx={{ width: 38, height: 38 }} />
                             <Box>
-                                <Typography variant="h6">{user.name}</Typography>
-                                {isMobile &&
-                                    <Box display="flex" flexDirection="row" gap={2} alignItems="center">
-                                        <Typography variant="subtitle1" fontWeight="bold">
-                                            Rank: #{user.rank}
-                                        </Typography>
-                                        <Typography variant="body2" color="text.secondary">
-                                            {renderScore()}
-                                        </Typography>
-                                    </Box>
-                                }
+                                <Typography variant="h6" fontSize="16">{truncate(user.name, 23)}</Typography>
+                                <Box display="flex" flexDirection="row" gap={2} alignItems="center">
+                                    <Typography variant="subtitle1" fontWeight="bold">
+                                        Rank: #{user.rank}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {renderScore()}
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Stack>
                                 <Stack direction="row" spacing={4} mt={1}>
                                     {renderConfidences()}
                                 </Stack>
-                            </Box>
-                        </Stack>
                     </Grid>
-
-                    {!isMobile &&
-                        <Grid item sx={{ pr: 2 }}>
-                            <Stack spacing={0.5} alignItems="flex-end" justifyContent="center">
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                    Rank: #{user.rank}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {renderScore()}
-                                </Typography>
-                            </Stack>
-                        </Grid>
-                    }
                 </Grid>
             </CardContent>
         </Card>

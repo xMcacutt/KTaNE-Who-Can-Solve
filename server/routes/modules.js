@@ -99,26 +99,54 @@ router.get("/", async (req, res) => {
         let orderClause = "";
         switch (sortBy) {
             case "date":
-                orderClause = `ORDER BY modules.published ${sortOrder}`;
-                break;
-            case "difficulty":
-                orderClause = `ORDER BY modules.defuser_difficulty ${sortOrder}`;
-                break;
-            case "popularity":
                 orderClause = `
-                    ORDER BY (
-                        SELECT COUNT(*) FROM user_module_scores ps
-                        WHERE ps.module_id = modules.module_id
-                        AND (ps.defuser_confidence = 'Confident' OR ps.expert_confidence = 'Confident')
-                    ) ${sortOrder}
+                    ORDER BY
+                        modules.published ${sortOrder},
+                        LOWER(modules.name) ASC
                 `;
                 break;
+                
+            case "difficulty":
+                orderClause = `
+                    ORDER BY
+                        CASE
+                            WHEN modules.defuser_difficulty IS NULL OR modules.expert_difficulty IS NULL THEN 999
+                            ELSE
+                                COALESCE(
+                                    array_position(
+                                        ARRAY['Trivial','VeryEasy','Easy','Medium','Hard','VeryHard','Extreme'],
+                                        modules.defuser_difficulty
+                                    ), 999
+                                ) +
+                                COALESCE(
+                                    array_position(
+                                        ARRAY['Trivial','VeryEasy','Easy','Medium','Hard','VeryHard','Extreme'],
+                                        modules.expert_difficulty
+                                    ), 999
+                                )
+                        END ${sortOrder},
+                        LOWER(modules.name) ASC
+                `;
+                break;
+
+            case "popularity":
+                orderClause = `
+                    ORDER BY
+                        (
+                            SELECT COUNT(*) FROM user_module_scores ps
+                            WHERE ps.module_id = modules.module_id
+                            AND (ps.defuser_confidence = 'Confident' OR ps.expert_confidence = 'Confident')
+                        ) ${sortOrder},
+                        LOWER(modules.name) ASC
+                `;
+                break;
+
             case "name":
             default:
                 orderClause = `
                     ORDER BY
                         CASE WHEN LOWER(modules.name) = $${paramIndex} THEN 0 ELSE 1 END,
-                        modules.name ${sortOrder}
+                        LOWER(modules.name) ${sortOrder}
                 `;
                 params.push(search);
                 paramIndex++;

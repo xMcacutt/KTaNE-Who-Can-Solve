@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import UserCard from "./UserCard";
+import UserCardMobile from "./UserCardMobile";
 import { Virtuoso } from "react-virtuoso";
 import {
     Box,
@@ -13,6 +14,8 @@ import {
     InputLabel,
     Select,
     MenuItem,
+    useTheme,
+    useMediaQuery
 } from "@mui/material";
 
 export function useDebounce(value, delay) {
@@ -27,6 +30,8 @@ export function useDebounce(value, delay) {
 }
 
 export default function UserList() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     let savedFilters = {};
     try {
         savedFilters = JSON.parse(localStorage.getItem("user_filters")) || {};
@@ -131,12 +136,24 @@ export default function UserList() {
                             const user = users[index];
                             return (
                                 <div style={{ paddingBottom: 16 }}>
-                                    <UserCard
-                                        key={user.id}
-                                        user={user}
-                                        index={index}
-                                        sortType={sortType}
-                                    />
+                                    {
+                                        isMobile &&
+                                        <UserCardMobile
+                                            key={user.id}
+                                            user={user}
+                                            index={index}
+                                            sortType={sortType}
+                                        />
+                                    }
+                                    {
+                                        !isMobile &&
+                                        <UserCard
+                                            key={user.id}
+                                            user={user}
+                                            index={index}
+                                            sortType={sortType}
+                                        />
+                                    }
                                 </div>
                             )
                         }}
