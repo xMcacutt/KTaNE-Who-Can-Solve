@@ -31,7 +31,7 @@ export default function Layout() {
         { label: "Users", to: "/users" },
         { label: "Bombs", to: "/bombs" },
         { label: "Privacy", href: "/privacy/Policy.html" },
-        { label: "Github", href: "https://ktanewhocansolve.com/" },
+        { label: "Github", href: "https://github.com/xMcacutt/KTaNE-Who-Can-Solve" },
         ...(authUser ? [{ label: "Practice", to: "/practice" }] : []),
     ];
 
