@@ -1,30 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Card, Box, Typography, Link, Chip, Avatar, useTheme, useMediaQuery } from '@mui/material';
 import { getHeatmapColor, bossToColor, confidenceIcons, truncate } from "../../utility";
+import ModuleIcon from './ModuleIcon';
 
 function ModuleChip({ module, probability, viewStyle, users, authUser }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-    const encodedModuleName = encodeURIComponent(module.icon_file_name || module.name).replace(/'/g, "\\'");
+    const encodedModuleName = encodeURIComponent(module.icon_file_name);
     const [bgImageUrl, setBgImageUrl] = useState('');
-    const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
-    const localImageUrl = `/icons/${module.icon_file_name}.png`;
     const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
-
-    useEffect(() => {
-        const loadImage = (url, onSuccess, onError) => {
-            const img = new Image();
-            img.onload = () => onSuccess(url);
-            img.onerror = onError;
-            img.src = url;
-        };
-
-        loadImage(imageUrl, (url) => setBgImageUrl(url), () => {
-            loadImage(localImageUrl, (url) => setBgImageUrl(url), () => {
-                setBgImageUrl('/icons/Unknown Module.png');
-            });
-        });
-    }, [imageUrl, localImageUrl]);
 
     let effectiveUsers = [...users];
     if (users.length === 1) {
@@ -87,23 +71,21 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                 overflow: 'hidden',
                 aspectRatio: '1 / 1',
                 width: isMobile ? 180 : 300,
+                backgroundColor: viewStyle === 'Difficulty Heatmap' ? getHeatmapColor(module) : 'rgba(0, 0, 0, 0.0)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
             }}
         >
-            <Box
-                sx={{
+            {
+                viewStyle === 'Large Icons' &&
+                <ModuleIcon iconFileName={encodedModuleName} size="100%" style={{
                     position: 'absolute',
-                    inset: 0,
-                    backgroundColor: viewStyle === 'Difficulty Heatmap' ? getHeatmapColor(module) : 'transparent',
-                    backgroundImage: `${viewStyle !== 'Large Icons' ? 'none' : `url(${bgImageUrl})`}`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
                     filter: 'blur(6px) brightness(0.3) saturate(0.8)',
                     imageRendering: 'pixelated',
-                }}
-            />
+                }} />
+            }
+
 
             <Box
                 sx={{
@@ -129,16 +111,7 @@ function ModuleChip({ module, probability, viewStyle, users, authUser }) {
                     }}
                 >
                     {viewStyle === 'Small Icons' && (
-                        <Box
-                            sx={{
-                                width: isMobile ? 32 : 40,
-                                height: isMobile ? 32 : 40,
-                                backgroundImage: `url(${bgImageUrl})`,
-                                backgroundSize: 'contain',
-                                backgroundRepeat: 'no-repeat',
-                                backgroundPosition: 'center',
-                            }}
-                        />
+                        <ModuleIcon iconFileName={encodedModuleName} size={isMobile ? 32 : 40} />
                     )}
                     <Link href={manualUrl}>
                         <Typography variant="h6" fontSize={isMobile ? "0.6rem" : "1.4rem"}>{truncate(module.name, 21)}</Typography>

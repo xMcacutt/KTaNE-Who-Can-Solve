@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 function BombCard({
     mission,
     users,
+    sort,
     onFavouriteChanged,
     authUser,
 }) {
@@ -45,13 +46,13 @@ function BombCard({
                 <Grid container spacing={3} alignItems="center">
                     {
                         authUser &&
-                        <Grid item xs={12}>
+                        <Grid xs={12}>
                             <IconButton onClick={handleFavouriteSet}>
                                 {isFavourite ? <StarFilledIcon /> : <StarIcon />}
                             </IconButton>
                         </Grid>
                     }
-                    <Grid item xs={12} md={9}>
+                    <Grid xs={12}>
                         <Box display="flex" alignItems="center" gap={4}>
                             <Box ml={2}>
                                 <Typography variant="h6">{mission.mission_name}</Typography>
@@ -66,17 +67,20 @@ function BombCard({
                                 >
                                     <Chip label={`Total Modules: ${totalModules}`} size="small" sx={{ pt: 0.35 }} />
                                     <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" sx={{ pt: 0.35 }} />
+                                    {sort === "difficulty" && mission.difficulty != null && (
+                                        <Chip label={`Difficulty: ${mission.difficulty}`} size="small" sx={{ pt: 0.35 }} />
+                                    )}
                                 </Box>
                             </Box>
                         </Box>
                     </Grid>
-                    <Grid item xs={12} md={3} flexGrow={1}>
+                    <Grid xs={12} flexGrow={1}>
                         <Box display="flex" justifyContent="flex-start">
                             {
                                 authUser &&
                                 <Grid container spacing={1} sx={{ mt: 2 }}>
                                     {userModuleStats.map((u) => (
-                                        <Grid item key={u.id} xs={3}>
+                                        <Grid key={u.id} xs={3}>
                                             <Box textAlign="center">
                                                 <Avatar src={u.avatar} sx={{ mx: "auto", mb: 1 }} />
                                                 <Typography variant="body2">{truncate(u.name, 10)}</Typography>
@@ -90,29 +94,31 @@ function BombCard({
                             }
                         </Box>
                     </Grid>
-                    <Stack item xs={12} md={3} direction="row" spacing={-2}>
-                        {isLoading ? (
-                            <CircularProgress size={20} />
-                        ) : (
-                            sortedModuleIds.reverse().map((moduleId, idx) => {
-                                const moduleData = modulesData[moduleId];
-                                if (!moduleData || !moduleData.icon_file_name) {
-                                    return null;
-                                }
-                                const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
-                                return (
-                                    <ModuleIcon iconFileName={encodedModuleName} size={64} style={
-                                        {
-                                            filter: `brightness(${0.2 * (5 - idx)})`,
-                                            zIndex: 5 - idx,
-                                            imageRendering: 'pixelated'
-                                        }
-                                    } />
-                                );
-                            })
-                        )
-                        }
-                    </Stack>
+                    <Grid xs={12}>
+                        <Stack direction="row" spacing={-2}>
+                            {isLoading ? (
+                                <CircularProgress size={20} />
+                            ) : (
+                                sortedModuleIds.reverse().map((moduleId, idx) => {
+                                    const moduleData = modulesData[moduleId];
+                                    if (!moduleData || !moduleData.icon_file_name) {
+                                        return null;
+                                    }
+                                    const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
+                                    return (
+                                        <ModuleIcon key={moduleId} iconFileName={encodedModuleName} size={64} style={
+                                            {
+                                                filter: `brightness(${0.2 * (5 - idx)})`,
+                                                zIndex: 5 - idx,
+                                                imageRendering: 'pixelated'
+                                            }
+                                        } />
+                                    );
+                                })
+                            )
+                            }
+                        </Stack>
+                    </Grid>
                 </Grid>
             </CardContent >
         </Card >

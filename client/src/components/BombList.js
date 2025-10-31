@@ -242,10 +242,12 @@ export default function BombList() {
                             return (
                                 <div style={{ paddingBottom: 16 }}>
                                     <BombCard
+                                        key={mission.id}
                                         mission={mission}
                                         index={index}
                                         users={activeUsers}
                                         authUser={authUser}
+                                        sort={sort}
                                         onFavouriteChanged={refetch}
                                     />
                                 </div>

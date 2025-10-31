@@ -9,7 +9,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
     if (!bomb.pools || bomb.pools.length === 0) return null;
 
     return (
-        <Box mt={2}>
+        <Box mt={1}>
             <Typography variant="subtitle1" gutterBottom>
                 Modules: {bomb.modules} | Time: {formatTime(bomb.time)} | Strikes: {bomb.strikes}
             </Typography>
@@ -20,6 +20,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
                     flexWrap: 'wrap',
                     justifyContent: 'space-evenly',
                     gap: 2,
+                    mt: 2
                 }}
             >
                 {bomb.pools.map((pool, idx) => {
@@ -128,6 +129,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
                                 border: '5px dotted gray',
                                 borderRadius: 5,
                                 p: 1,
+                                m: 1
                             }}
                         >
                             {(optionsCount > 1 || pulledCount > 1) && (

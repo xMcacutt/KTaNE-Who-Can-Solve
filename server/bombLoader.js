@@ -1,4 +1,13 @@
 import pool from "./db.js";
+import fs from "fs";
+import path from "path";
+
+const logFile = path.join(process.cwd(), "difficulty_log.txt");
+const logStream = fs.createWriteStream(logFile, { flags: "a" });
+
+function log(message) {
+    logStream.write(message + "\n");
+}
 
 const url = "https://raw.githubusercontent.com/samfundev/KTANE-Bombs/refs/heads/main/importer/bombs.json";
 
@@ -25,15 +34,20 @@ async function insertMissions() {
     try {
         const packs = await loadJson();
 
-        const difficultyMap = {
+        const DIFFICULTY_MAP = {
             Trivial: 1,
             VeryEasy: 3,
             Easy: 5,
             Medium: 15,
-            Hard: 30,
-            VeryHard: 50,
-            Extreme: 75,
+            Hard: 25,
+            VeryHard: 40,
+            Extreme: 85,
         };
+
+        const TIME_FACTOR_WEIGHT = 0.5;
+        const MIN_TIME_FACTOR = 0.5;
+        const MAX_TIME_FACTOR = 2;
+        const MIN_RATIO = 0.1;
 
         for (const pack of packs) {
             const packName = pack.name;
@@ -48,70 +62,85 @@ async function insertMissions() {
                     ),
                 ];
 
-                let difficulty = null;
+                let missionDifficulty = null;
 
                 if (allModuleIds.length > 0) {
                     const { rows: moduleRows } = await pool.query(
                         `SELECT module_id, expert_difficulty, defuser_difficulty
-              FROM modules
-              WHERE module_id = ANY($1)`,
+                        FROM modules
+                        WHERE module_id = ANY($1)`,
                         [allModuleIds]
                     );
 
-                    const baseScores = moduleRows.map((m) => {
-                        const expertScore = difficultyMap[m.expert_difficulty] ?? 0;
-                        const defuserScore = difficultyMap[m.defuser_difficulty] ?? 0;
-                        return (expertScore + defuserScore) / 2;
-                    });
+                    const bombDifficulties = mission.bombs.map((bomb) => {
+                        let selectedModuleScores = [];
+                        for (const poolObject of bomb.pools) {
+                            const poolModules = poolObject.modules || [];
+                            if (poolModules.length === 0) continue;
 
-                    if (baseScores.length > 0) {
-                        const avgModuleDifficulty =
-                            baseScores.reduce((a, b) => a + b, 0) / baseScores.length;
+                            const scoredModules = poolModules.map(moduleId => {
+                                const moduleData = moduleRows.find(row => row.module_id === moduleId);
+                                if (!moduleData) return 0;
 
-                        const bombDifficulties = mission.bombs.map((bomb) => {
-                            const totalModules = bomb.pools.reduce(
-                                (sum, pool) => sum + (pool.count || 1),
-                                0
-                            );
+                                const expertScore = DIFFICULTY_MAP[moduleData.expert_difficulty] ?? 0;
+                                const defuserScore = DIFFICULTY_MAP[moduleData.defuser_difficulty] ?? 0;
+                                return (expertScore + defuserScore) / 2;
+                            });
 
-                            const minutes = bomb.time / 60;
-                            const minutesPerModule = minutes / Math.max(totalModules, 1);
+                            const avgPoolDifficulty =
+                                scoredModules.reduce((sum, s) => sum + s, 0) / scoredModules.length;
 
-                            const baseTime = 1;
-                            const ratio = baseTime / minutesPerModule;
-                            const timeFactor = 1 + 0.5 * Math.log2(ratio);
-                            return avgModuleDifficulty * (0.5 + 0.5 * Math.min(Math.max(timeFactor, 0.5), 2));
+                            for (let i = 0; i < poolObject.count; i++) {
+                                selectedModuleScores.push({ baseScore: avgPoolDifficulty });
+                            }
+                        }
 
+                        const moduleScores = selectedModuleScores.map(({ baseScore }) => {
+                            const safeBaseScore = Number.isFinite(baseScore) ? baseScore : 0;
+                            return safeBaseScore;
                         });
 
-                        difficulty =
-                            bombDifficulties.reduce((a, b) => a + b, 0) /
-                            bombDifficulties.length;
-                    }
+                        const averageModuleDifficulty =
+                            moduleScores.reduce((sum, score) => sum + score, 0) / Math.max(moduleScores.length, 1);
+
+                        const minutes = bomb.time / 60;
+                        const minutesPerModule = minutes / Math.max(bomb.modules, 1);
+                        const timeRatio = 1 / minutesPerModule;
+                        const timeFactor = 1 + TIME_FACTOR_WEIGHT * Math.log2(Math.max(timeRatio, MIN_RATIO));
+                        const clampedTimeFactor = Math.min(Math.max(timeFactor, MIN_TIME_FACTOR), MAX_TIME_FACTOR);
+
+                        const bombDifficulty =
+                            averageModuleDifficulty *
+                            (0.5 + TIME_FACTOR_WEIGHT * clampedTimeFactor);
+
+                        return bombDifficulty;
+                    });
+
+                    missionDifficulty = bombDifficulties.reduce((sum, diff) => sum + diff, 0) / bombDifficulties.length;
                 }
 
                 const query = `
-          INSERT INTO missions (
-            pack_name,
-            mission_name,
-            in_game_name,
-            authors,
-            date_added,
-            bombs,
-            factory,
-            difficulty
-          )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-          ON CONFLICT (mission_name, pack_name)
-          DO UPDATE SET
-            in_game_name = EXCLUDED.in_game_name,
-            authors = EXCLUDED.authors,
-            date_added = EXCLUDED.date_added,
-            bombs = EXCLUDED.bombs,
-            factory = EXCLUDED.factory,
-            difficulty = EXCLUDED.difficulty
-          RETURNING id;
-        `;
+                    INSERT INTO missions (
+                        pack_name,
+                        mission_name,
+                        in_game_name,
+                        authors,
+                        date_added,
+                        bombs,
+                        factory,
+                        difficulty
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    ON CONFLICT (mission_name, pack_name)
+                    DO UPDATE SET
+                        in_game_name = EXCLUDED.in_game_name,
+                        authors = EXCLUDED.authors,
+                        date_added = EXCLUDED.date_added,
+                        bombs = EXCLUDED.bombs,
+                        factory = EXCLUDED.factory,
+                        difficulty = EXCLUDED.difficulty
+                    RETURNING id;
+                    `;
 
                 const values = [
                     packName,
@@ -121,11 +150,10 @@ async function insertMissions() {
                     parseDate(mission.dateAdded),
                     JSON.stringify(mission.bombs || []),
                     mission.factory,
-                    difficulty
+                    missionDifficulty
                 ];
 
-                const { rows } = await pool.query(query, values);
-                //console.log(`Upserted mission: ${mission.name} (Pack: ${packName}), ID: ${rows[0].id}`);
+                await pool.query(query, values);
             }
         }
     } catch (err) {

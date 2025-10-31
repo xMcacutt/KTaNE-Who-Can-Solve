@@ -17,7 +17,7 @@ export const getHeatmapColor = (module) => {
     const defuser_difficulty = difficultyMap[module.defuser_difficulty];
     const difficulty = (expert_difficulty + defuser_difficulty) / 2;
     const hue = (1 - difficulty / 6) * 120;
-    return `hsl(${hue}, 70%, 50%)`;
+    return `hsl(${hue}, 70%, 20%)`;
 };
 
 export const confidenceOptions = [
