@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Virtuoso } from 'react-virtuoso';
-import ModuleCard from "./ModuleCard";
-import ModuleCardMobile from "./ModuleCardMobile";
+import ModuleCard from "./cards/ModuleCard";
+import ModuleCardMobile from "./cards/ModuleCardMobile";
 import {
     Box,
     Typography,

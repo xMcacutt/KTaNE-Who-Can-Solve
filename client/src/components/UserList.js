@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import UserCard from "./UserCard";
-import UserCardMobile from "./UserCardMobile";
+import UserCard from "./cards/UserCard";
+import UserCardMobile from "./cards/UserCardMobile";
 import { Virtuoso } from "react-virtuoso";
 import {
     Box,

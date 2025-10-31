@@ -3,8 +3,8 @@ import { IconButton, Box, MenuItem, Select, Accordion, AccordionDetails, Accordi
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useQuery } from "@tanstack/react-query";
 import { Virtuoso } from "react-virtuoso";
-import UserPanel from "./UserPanel";
-import BombCard from "./BombCard";
+import UserPanel from "./small/UserPanel";
+import BombCard from "./cards/BombCard";
 import { useAuth } from "../context/AuthContext";
 import { useActiveUsers } from "../context/ActiveUsersContext";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
@@ -189,9 +189,14 @@ export default function BombList() {
             }}
         >
             <Box sx={{ flexShrink: 0, p: 2 }}>
-                <Typography variant="h5" fontWeight={600} mb={2}>
-                    Missions
-                </Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h5" fontWeight={600} mb={2}>Missions</Typography>
+                    {authUser && (
+                        <IconButton onClick={() => setPanelOpen(true)}>
+                            <GroupAddIcon />
+                        </IconButton>
+                    )}
+                </Box>
                 <TextField
                     fullWidth
                     placeholder="Search missions..."

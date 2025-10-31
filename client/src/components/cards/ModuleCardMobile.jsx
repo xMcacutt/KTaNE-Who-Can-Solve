@@ -1,7 +1,9 @@
 import React from "react";
 import axios from "axios";
-import { bossToColor, confidenceIcons, confidenceOptions, truncate } from "../utility";
+import { bossToColor, confidenceIcons, confidenceOptions, truncate } from "../../utility";
 import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl, InputLabel, Link, Chip, Grid, Checkbox, FormControlLabel } from "@mui/material";
+import useModuleCard from "../../hooks/useModuleCard";
+import ModuleIcon from "../small/ModuleIcon";
 
 function ModuleCardMobile({
     module,
@@ -12,58 +14,9 @@ function ModuleCardMobile({
     setScores,
     refetchScores,
 }) {
-    const handleScoreChange = async (type, value) => {
-        if (!user) return;
-        const prevScore = score || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
-        let newScore = { ...prevScore };
-        if (type === "defuser") {
-            newScore.defuserConfidence = value;
-        } else if (type === "expert") {
-            newScore.expertConfidence = value;
-        } else if (type === "solo") {
-            newScore.canSolo = value;
-        }
-        setScores((prev) => ({
-            ...prev,
-            [module.module_id]: newScore,
-        }));
-        try {
-            await axios.put(
-                `/api/scores/${encodeURIComponent(module.module_id)}`,
-                {
-                    defuserConfidence: newScore.defuserConfidence,
-                    expertConfidence: newScore.expertConfidence,
-                    canSolo: newScore.canSolo,
-                },
-                { withCredentials: true }
-            ).then(response => console.log('Update successful:', response.data));
-            if (refetchScores) refetchScores();
-        } catch (error) {
-            console.error("Failed to update score:", error);
-            setScores((prev) => ({
-                ...prev,
-                [module.module_id]: prevScore,
-            }));
-        }
-    };
-
     const encodedModuleName = encodeURIComponent(module.icon_file_name);
-    const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
-    const localImageUrl = `/icons/${module.icon_file_name}.png`;
+    const { handleScoreChange } = useModuleCard({ module, user, authUser, score, setScores, refetchScores });
     const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
-    const formattedDate = module.published
-        ? new Date(module.published).toISOString().split("T")[0]
-        : "N/A";
-
-    const handleImageError = (e) => {
-        const currentSrc = e.target.src;
-        if (currentSrc.includes('raw.githubusercontent.com')) {
-            e.target.src = localImageUrl;
-        } else {
-            e.target.src = "/icons/Unknown Module.png";
-            e.target.onerror = null;
-        }
-    };
 
     return (
         <Card
@@ -80,15 +33,7 @@ function ModuleCardMobile({
                     <Grid item xs={12} md={9} size={6} flexGrow={1}>
                         <Box display="flex" flexDirection="column" gap={1} height="100%">
                             <Box display="flex" alignItems="center" gap={2}>
-                                <Box
-                                    component="img"
-                                    src={imageUrl}
-                                    alt={module.name}
-                                    width={48}
-                                    height={48}
-                                    sx={{ imageRendering: 'pixelated', borderRadius: 1 }}
-                                    onError={(e) => handleImageError(e)}
-                                />
+                                <ModuleIcon iconFileName={encodedModuleName} size={64} />
                                 <Link href={manualUrl} underline="hover">
                                     <Typography variant="h6">{module.name}</Typography>
                                 </Link>

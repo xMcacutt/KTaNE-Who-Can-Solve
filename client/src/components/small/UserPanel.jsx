@@ -15,8 +15,8 @@ import {
     TextField,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useAuth } from "../context/AuthContext";
-import { truncate } from "../utility";
+import { useAuth } from "../../context/AuthContext";
+import { truncate } from "../../utility";
 
 export default function UserPanel({
     open,

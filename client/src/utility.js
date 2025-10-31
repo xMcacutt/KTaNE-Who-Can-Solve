@@ -12,6 +12,14 @@ export const bossToColor = (type) => {
         return "#a1740f";
 }
 
+export const getHeatmapColor = (module) => {
+    const expert_difficulty = difficultyMap[module.expert_difficulty];
+    const defuser_difficulty = difficultyMap[module.defuser_difficulty];
+    const difficulty = (expert_difficulty + defuser_difficulty) / 2;
+    const hue = (1 - difficulty / 6) * 120;
+    return `hsl(${hue}, 70%, 50%)`;
+};
+
 export const confidenceOptions = [
     "Unknown",
     "Attempted",

@@ -1,7 +1,9 @@
 import React from "react";
 import axios from "axios";
-import { bossToColor, confidenceIcons, confidenceOptions } from "../utility";
+import { bossToColor, confidenceIcons, confidenceOptions } from "../../utility";
 import { Card, CardContent, Typography, Box, Select, MenuItem, FormControl, InputLabel, Link, Chip, Grid, Checkbox, FormControlLabel } from "@mui/material";
+import useModuleCard from "../../hooks/useModuleCard";
+import ModuleIcon from "../small/ModuleIcon";
 
 function ModuleCard({
     module,
@@ -12,58 +14,12 @@ function ModuleCard({
     setScores,
     refetchScores,
 }) {
-    const handleScoreChange = async (type, value) => {
-        if (!user) return;
-        const prevScore = score || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
-        let newScore = { ...prevScore };
-        if (type === "defuser") {
-            newScore.defuserConfidence = value;
-        } else if (type === "expert") {
-            newScore.expertConfidence = value;
-        } else if (type === "solo") {
-            newScore.canSolo = value;
-        }
-        setScores((prev) => ({
-            ...prev,
-            [module.module_id]: newScore,
-        }));
-        try {
-            await axios.put(
-                `/api/scores/${encodeURIComponent(module.module_id)}`,
-                {
-                    defuserConfidence: newScore.defuserConfidence,
-                    expertConfidence: newScore.expertConfidence,
-                    canSolo: newScore.canSolo,
-                },
-                { withCredentials: true }
-            ).then(response => console.log('Update successful:', response.data));
-            if (refetchScores) refetchScores();
-        } catch (error) {
-            console.error("Failed to update score:", error);
-            setScores((prev) => ({
-                ...prev,
-                [module.module_id]: prevScore,
-            }));
-        }
-    };
-
     const encodedModuleName = encodeURIComponent(module.icon_file_name);
-    const imageUrl = `https://raw.githubusercontent.com/Timwi/KtaneContent/refs/heads/master/Icons/${encodedModuleName}.png`;
-    const localImageUrl = `/icons/${module.icon_file_name}.png`;
+    const { handleScoreChange } = useModuleCard({ module, user, authUser, score, setScores, refetchScores });
     const manualUrl = `https://ktane.timwi.de/redirect/#${encodedModuleName}`;
     const formattedDate = module.published
         ? new Date(module.published).toISOString().split("T")[0]
         : "N/A";
-
-    const handleImageError = (e) => {
-        const currentSrc = e.target.src;
-        if (currentSrc.includes('raw.githubusercontent.com')) {
-            e.target.src = localImageUrl;
-        } else {
-            e.target.src = "/icons/Unknown Module.png";
-            e.target.onerror = null;
-        }
-    };
 
     return (
         <Card
@@ -79,17 +35,7 @@ function ModuleCard({
                 <Grid container alignItems="stretch">
                     <Grid item xs={12} sx={{ pl: 1 }} md={9} flexGrow={1} size={3}>
                         <Box display="flex" alignItems="center" height="100%" mr="30">
-                            <Box
-                                component="img"
-                                src={imageUrl}
-                                alt={module.name}
-                                width={64}
-                                height={64}
-                                sx={{
-                                    imageRendering: 'pixelated',
-                                }}
-                                onError={(e) => handleImageError(e)}
-                            />
+                            <ModuleIcon iconFileName={encodedModuleName} size={64} />
                             <Box ml={2}>
                                 <Link href={manualUrl}>
                                     <Typography variant="h6">{module.name}</Typography>
@@ -144,7 +90,7 @@ function ModuleCard({
                                         }
                                         label="Can Solo"
                                         labelPlacement="top"
-                                        sx={{ m: 0, whiteSpace: "nowrap"}}
+                                        sx={{ m: 0, whiteSpace: "nowrap" }}
                                     />
                                     <Box display="flex" flexDirection="column" alignItems="flex-end" gap={1}>
                                         <Box display="flex" alignItems="center">

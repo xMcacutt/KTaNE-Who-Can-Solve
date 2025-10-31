@@ -1,13 +1,12 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import { useQuery } from "@tanstack/react-query";
-import { AutoSizer, List, CellMeasurer, CellMeasurerCache } from "react-virtualized";
-import ModuleCard from "../components/ModuleCard";
-import ModuleCardMobile from "../components/ModuleCardMobile";
-import { useAuth } from "../context/AuthContext";
 import { Virtuoso } from "react-virtuoso";
-
+import ModuleCard from "../components/cards/ModuleCard";
+import ModuleCardMobile from "../components/cards/ModuleCardMobile";
+import { useAuth } from "../context/AuthContext";
+import UploadDialog from "../components/small/UploadDialog";
+import { useUserAccount } from "../hooks/useUserAccount";
 import {
     Box,
     Typography,
@@ -19,112 +18,43 @@ import {
     Stack,
     Divider,
     Avatar,
-    Paper,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    RadioGroup,
-    FormControlLabel,
-    Radio,
     useTheme,
     useMediaQuery
 } from "@mui/material";
-
-function normalizeScores(input) {
-    if (!input) return {};
-    if (Array.isArray(input)) {
-        return Object.fromEntries(
-            input.map((s) => [
-                s.module_id,
-                {
-                    defuserConfidence: s.defuser_confidence,
-                    expertConfidence: s.expert_confidence,
-                    canSolo: s.can_solo,
-                },
-            ])
-        );
-    }
-    return input;
-}
+import ConfidenceInfo from "../components/small/ConfidenceInfo";
 
 function UserAccount() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
     const { authUser, handleLogout } = useAuth();
-    const { id } = useParams();
-    const profileId = id;
+    const { id: profileId } = useParams();
 
     const [uploadType, setUploadType] = useState(null);
-    const [role, setRole] = useState("defuser");
-    const [file, setFile] = useState(null);
     const [dialogOpen, setDialogOpen] = useState(false);
-    const [logUrl, setLogUrl] = useState("");
-
-    const cache = useRef(
-        new CellMeasurerCache({
-            fixedWidth: true,
-            minHeight: 130,
-        })
-    );
-
-    const listRef = useRef(null);
     const [filterType, setFilterType] = useState("defuser");
     const [filterConfidence, setFilterConfidence] = useState("Confident");
 
-    const [localScores, setLocalScores] = useState({});
-
     const {
-        data: profileUser,
-        isLoading: profileLoading,
-        error: profileError,
-    } = useQuery({
-        queryKey: ["profileUser", profileId],
-        queryFn: async () => {
-            const res = await fetch(`/api/users/${profileId}`, {
-                credentials: "include",
-            });
-            if (!res.ok) throw new Error("User does not exist");
-            return res.json();
-        },
-        enabled: Boolean(profileId),
-        staleTime: 1000 * 60 * 5,
-    });
+        profileUser,
+        profileError,
+        localScores,
+        setLocalScores,
+        modules,
+        stats,
+        refetchScores,
+        loading
+    } = useUserAccount(profileId);
 
     const isOwnAccount = authUser?.id === profileUser?.id;
 
-    const {
-        data: fetchedScoresArray = [],
-        isLoading: profileScoresLoading,
-        refetch: refetchScores,
-    } = useQuery({
-        queryKey: ["profileScores", profileId],
-        queryFn: async () => {
-            const res = await fetch(`/api/users/${profileId}/scores`, {
-                credentials: "include",
-            });
-            if (!res.ok) throw new Error("Failed to fetch profile scores");
-            return res.json();
-        },
-        enabled: Boolean(profileId),
-        staleTime: 1000 * 60 * 5,
-    });
-
-    useEffect(() => {
-        if (Array.isArray(fetchedScoresArray)) {
-            setLocalScores(normalizeScores(fetchedScoresArray));
-        }
-    }, [fetchedScoresArray]);
-
-    const { data: modules = [], isLoading: modulesLoading } = useQuery({
-        queryKey: ["modules"],
-        queryFn: async () => {
-            const res = await fetch(`/api/modules`, { credentials: "include" });
-            if (!res.ok) throw new Error("Failed to fetch modules");
-            return res.json();
-        },
-        staleTime: 1000 * 60 * 5,
-    });
+    const filteredModules = useMemo(() => {
+        return modules.filter((module) => {
+            const score = localScores[module.module_id] || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
+            return filterType === "defuser" ? score.defuserConfidence === filterConfidence
+                : filterType === "expert" ? score.expertConfidence === filterConfidence
+                    : filterType === "solo" ? score.canSolo : true;
+        });
+    }, [modules, localScores, filterType, filterConfidence]);
 
     const handleDeleteAccount = async () => {
         if (!isOwnAccount) {
@@ -143,91 +73,9 @@ function UserAccount() {
         }
     };
 
-    const stats = {
-        defuser: { Confident: 0, Attempted: 0, Unknown: 0, Avoid: 0 },
-        expert: { Confident: 0, Attempted: 0, Unknown: 0, Avoid: 0 },
-    };
-    Object.values(localScores).forEach((score) => {
-        stats.defuser[score.defuserConfidence || "Unknown"]++;
-        stats.expert[score.expertConfidence || "Unknown"]++;
-    });
-    const totalModules = modules.length;
-    stats.defuser.Unknown = totalModules - (stats.defuser.Confident + stats.defuser.Attempted + stats.defuser.Avoid);
-    stats.expert.Unknown = totalModules - (stats.expert.Confident + stats.expert.Attempted + stats.expert.Avoid);
-
-    const filteredModules = modules.filter((module) => {
-        const score = localScores[module.module_id] || { defuserConfidence: "Unknown", expertConfidence: "Unknown", canSolo: false };
-        return filterType === "defuser" ? score.defuserConfidence === filterConfidence
-            : filterType === "expert" ? score.expertConfidence === filterConfidence
-                : filterType === "solo" ? score.canSolo : true;
-    });
-
-    if (profileLoading || modulesLoading || profileScoresLoading) return <Typography>Loading...</Typography>;
-    if (profileError) return <Typography color="error">Failed to load profile: {profileError.message}</Typography>;
-    if (!profileUser) return <Typography color="text.secondary">User not found.</Typography>;
-
-    const handleOpenDialog = (type) => {
-        setUploadType(type);
-        setDialogOpen(true);
-    };
-
-    const handleCloseDialog = () => {
-        setDialogOpen(false);
-        setFile(null);
-        setRole("defuser");
-        refetchScores();
-    };
-
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
-
-    const handleUpload = async () => {
-        if (!file && uploadType === "profile") {
-            alert("Please select a file to upload.");
-            return;
-        }
-
-        if (!file && !logUrl && uploadType === "log") {
-            alert("Please upload a log file or provide a log link.");
-            return;
-        }
-
-        try {
-            const formData = new FormData();
-            if (file) {
-                formData.append("file", file);
-            }
-            if (logUrl) {
-                formData.append("logUrl", logUrl);
-            }
-            formData.append("type", uploadType);
-            formData.append("role", role);
-
-            const res = await axios.post(
-                `/api/scores/upload`,
-                formData,
-                {
-                    withCredentials: true,
-                    headers: { "Content-Type": "multipart/form-data" },
-                }
-            );
-
-            alert(res.data.message || `${uploadType} uploaded successfully.`);
-            handleCloseDialog();
-
-        } catch (err) {
-            console.error("Upload failed:", err);
-            alert(err.response?.data?.error || "Upload failed. Please try again.");
-        }
-    };
-
     const handleDownloadProfile = async () => {
         try {
-            const res = await axios.get(
-                `/api/users/${profileId}/download`,
-                { responseType: "blob" }
-            );
+            const res = await axios.get(`/api/users/${profileId}/download`, { responseType: "blob" });
 
             const url = window.URL.createObjectURL(new Blob([res.data]));
 
@@ -251,6 +99,21 @@ function UserAccount() {
         }
     };
 
+    const handleOpenDialog = (type) => {
+        setUploadType(type);
+        setDialogOpen(true);
+    };
+
+    const handleCloseDialog = () => {
+        setDialogOpen(false);
+        setUploadType(null);
+    };
+
+    if (loading) return <Typography>Loading...</Typography>;
+    if (profileError) return <Typography color="error">Failed to load profile: {profileError.message}</Typography>;
+    if (!profileUser) return <Typography color="text.secondary">User not found.</Typography>;
+
+    const totalModules = modules.length;
 
     return (
         <Box
@@ -291,8 +154,7 @@ function UserAccount() {
                             </Button>
                         </>
                     )}
-                    {
-                        !isMobile &&
+                    {!isMobile && (
                         <Button
                             variant="outlined"
                             sx={{ height: "55" }}
@@ -300,57 +162,21 @@ function UserAccount() {
                         >
                             Download Profile
                         </Button>
-                    }
+                    )}
 
-                    {isOwnAccount ? (
+                    {isOwnAccount && (
                         <Button variant="contained" color="error" onClick={handleDeleteAccount} sx={{ height: "55" }}>
                             Delete My Data
                         </Button>
-                    ) : null}
+                    )}
                 </Stack>
 
-                <Dialog open={dialogOpen} onClose={handleCloseDialog}>
-                    <DialogTitle>Upload {uploadType}</DialogTitle>
-                    <DialogContent>
-                        <Typography gutterBottom>
-                            Is the profile for expert or defuser?
-                        </Typography>
-                        <RadioGroup
-                            row
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                        >
-                            <FormControlLabel value="defuser" control={<Radio />} label="Defuser" />
-                            <FormControlLabel value="expert" control={<Radio />} label="Expert" />
-                            <FormControlLabel value="both" control={<Radio />} label="Both" />
-                            {uploadType === "profile" && (
-                                <FormControlLabel value="solo" control={<Radio />} label="Solo" />
-                            )}
-                        </RadioGroup>
-                        <Box mt={2}>
-                            <input type="file" onChange={handleFileChange} />
-                        </Box>
-                        {uploadType === "log" && (
-                            <Box mt={2}>
-                                <Typography gutterBottom>Upload a file or paste a Logfile Analyzer link:</Typography>
-                                <Typography align="center" variant="body2" sx={{ my: 1 }}>— or —</Typography>
-                                <input
-                                    type="text"
-                                    placeholder="https://ktane.timwi.de/More/Logfile%20Analyzer.html#file=..."
-                                    value={logUrl}
-                                    onChange={(e) => setLogUrl(e.target.value)}
-                                    style={{ width: "100%" }}
-                                />
-                            </Box>
-                        )}
-                    </DialogContent>
-                    <DialogActions>
-                        <Button onClick={handleCloseDialog}>Cancel</Button>
-                        <Button onClick={handleUpload} variant="contained">
-                            Upload
-                        </Button>
-                    </DialogActions>
-                </Dialog>
+                <UploadDialog
+                    open={dialogOpen}
+                    type={uploadType}
+                    onClose={handleCloseDialog}
+                    refetchScores={refetchScores}
+                />
 
                 <Box mb={3}>
                     <Typography variant="subtitle1">User Stats (Total Modules: {totalModules})</Typography>
@@ -359,10 +185,7 @@ function UserAccount() {
                             <Typography variant="subtitle2">Defuser:</Typography>
                             <Stack direction="row" spacing={3} mt={1}>
                                 {Object.keys(stats.defuser).map((key) => (
-                                    <Stack direction="row" alignItems="center" key={key} spacing={1}>
-                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.1em" }} />
-                                        <Typography variant="body2">{stats.defuser[key]}</Typography>
-                                    </Stack>
+                                    <ConfidenceInfo key={key} type={key.toLowerCase()} count={stats.defuser[key]} />
                                 ))}
                             </Stack>
                         </Box>
@@ -371,10 +194,7 @@ function UserAccount() {
                             <Typography variant="subtitle2">Expert:</Typography>
                             <Stack direction="row" spacing={3} mt={1}>
                                 {Object.keys(stats.expert).map((key) => (
-                                    <Stack direction="row" alignItems="center" key={key} spacing={1}>
-                                        <img src={`/icons/${key.toLowerCase()}.png`} alt={key} style={{ height: "1.1em" }} />
-                                        <Typography variant="body2">{stats.expert[key]}</Typography>
-                                    </Stack>
+                                    <ConfidenceInfo key={key} type={key.toLowerCase()} count={stats.expert[key]} />
                                 ))}
                             </Stack>
                         </Box>
@@ -415,8 +235,7 @@ function UserAccount() {
                             if (!module) return null;
                             return (
                                 <div style={{ paddingBottom: 16 }}>
-                                    {
-                                        isMobile &&
+                                    {isMobile ? (
                                         <ModuleCardMobile
                                             module={module}
                                             index={index}
@@ -426,9 +245,7 @@ function UserAccount() {
                                             setScores={setLocalScores}
                                             refetchScores={refetchScores}
                                         />
-                                    }
-                                    {
-                                        !isMobile &&
+                                    ) : (
                                         <ModuleCard
                                             module={module}
                                             index={index}
@@ -438,7 +255,7 @@ function UserAccount() {
                                             setScores={setLocalScores}
                                             refetchScores={refetchScores}
                                         />
-                                    }
+                                    )}
                                 </div>
                             );
                         }}
