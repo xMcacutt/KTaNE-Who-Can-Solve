@@ -62,14 +62,32 @@ function BombCard({
                                     id="chips"
                                     display="flex"
                                     flexWrap="wrap"
+                                    maxWidth="50vh"
                                     gap={1}
                                     mt={1}
                                 >
-                                    <Chip label={`Total Modules: ${totalModules}`} size="small" sx={{ pt: 0.35 }} />
-                                    <Chip label={`Total Time: ${formatTime(totalTime)}`} size="small" sx={{ pt: 0.35 }} />
+                                    <Chip label={`Modules: ${totalModules}${mission.bombs.length > 1 ? ` in ${mission.bombs.length}` : ""}`} size="small" sx={{ pt: 0.35 }} />
+                                    <Chip label={`Time: ${formatTime(totalTime)}`} size="small" sx={{ pt: 0.35 }} />
                                     {sort === "difficulty" && mission.difficulty != null && (
-                                        <Chip label={`Difficulty: ${mission.difficulty}`} size="small" sx={{ pt: 0.35 }} />
+                                        <Chip label={`Difficulty: ${mission.difficulty.toFixed(2)}`} size="small" sx={{ pt: 0.35 }} />
                                     )}
+                                    {
+                                        mission.factory &&
+                                        <Chip label={`Factory: ${mission.factory}`} size="small" sx={{ pt: 0.35, backgroundColor: "#4444aa" }} />
+                                    }
+                                    {
+                                        mission.time_mode &&
+                                        <Chip label={`Time Mode: ${mission.time_mode}`} size="small" sx={{ pt: 0.35, backgroundColor: "#4444aa" }} />
+                                    }
+                                    {
+                                        mission.strike_mode &&
+                                        <Chip label={`Strike Mode: ${mission.strike_mode}`} size="small" sx={{ pt: 0.35, backgroundColor: "#4444aa" }} />
+                                    }
+                                    {
+                                        !mission.verified &&
+                                        <Chip label={`Unverified`} size="small" sx={{ pt: 0.35, backgroundColor: "#e74c3c" }} />
+                                    }
+
                                 </Box>
                             </Box>
                         </Box>

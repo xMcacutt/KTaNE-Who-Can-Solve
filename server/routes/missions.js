@@ -39,7 +39,7 @@ const fetchMissions = async (req) => {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
     let missionsQuery = `
-    SELECT id, pack_name, mission_name, in_game_name, authors, date_added, bombs, factory, difficulty
+    SELECT id, pack_name, mission_name, in_game_name, authors, date_added, bombs, factory, difficulty, strike_mode, time_mode, verified
     FROM missions
     ${whereClause}
   `;
@@ -191,10 +191,10 @@ router.get("/:name", async (req, res) => {
     try {
         const missionName = decodeURIComponent(req.params.name);
         const query = `
-      SELECT id, pack_name, mission_name, in_game_name, authors, date_added, bombs, factory
-      FROM missions
-      WHERE LOWER(mission_name) = LOWER($1)
-      LIMIT 1;
+        SELECT id, pack_name, mission_name, in_game_name, authors, date_added, bombs, factory, difficulty, strike_mode, time_mode, verified
+        FROM missions
+        WHERE LOWER(mission_name) = LOWER($1)
+        LIMIT 1;
     `;
         const result = await pool.query(query, [missionName]);
         if (result.rows.length === 0) {

@@ -2,11 +2,11 @@ import pool from "./db.js";
 import fs from "fs";
 import path from "path";
 
-const logFile = path.join(process.cwd(), "difficulty_log.txt");
-const logStream = fs.createWriteStream(logFile, { flags: "a" });
+//const logFile = path.join(process.cwd(), "difficulty_log.txt");
+//const logStream = fs.createWriteStream(logFile, { flags: "a" });
 
 function log(message) {
-    logStream.write(message + "\n");
+    logStream.write(message + "\n"); 
 }
 
 const url = "https://raw.githubusercontent.com/samfundev/KTANE-Bombs/refs/heads/main/importer/bombs.json";
@@ -33,6 +33,14 @@ function parseDate(dateString) {
 async function insertMissions() {
     try {
         const packs = await loadJson();
+        const alterQueries = [
+            `ALTER TABLE missions ADD COLUMN IF NOT EXISTS strike_mode TEXT;`,
+            `ALTER TABLE missions ADD COLUMN IF NOT EXISTS time_mode TEXT;`,
+            `ALTER TABLE missions ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT false;`
+        ];
+        for (const query of alterQueries) {
+            await pool.query(query);
+        }
 
         const DIFFICULTY_MAP = {
             Trivial: 1,
@@ -128,9 +136,12 @@ async function insertMissions() {
                         date_added,
                         bombs,
                         factory,
-                        difficulty
+                        difficulty,
+                        strike_mode,
+                        time_mode,
+                        verified
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                     ON CONFLICT (mission_name, pack_name)
                     DO UPDATE SET
                         in_game_name = EXCLUDED.in_game_name,
@@ -138,8 +149,11 @@ async function insertMissions() {
                         date_added = EXCLUDED.date_added,
                         bombs = EXCLUDED.bombs,
                         factory = EXCLUDED.factory,
-                        difficulty = EXCLUDED.difficulty
-                    RETURNING id;
+                        difficulty = EXCLUDED.difficulty,
+                        strike_mode = EXCLUDED.strike_mode,
+                        time_mode = EXCLUDED.time_mode,
+                        verified = EXCLUDED.verified
+                        RETURNING id;
                     `;
 
                 const values = [
@@ -150,7 +164,10 @@ async function insertMissions() {
                     parseDate(mission.dateAdded),
                     JSON.stringify(mission.bombs || []),
                     mission.factory,
-                    missionDifficulty
+                    missionDifficulty,
+                    mission.strikeMode,
+                    mission.timeMode,
+                    mission.verified
                 ];
 
                 await pool.query(query, values);

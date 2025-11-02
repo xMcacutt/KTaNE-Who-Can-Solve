@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Typography, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
+import { Box, Typography, Chip, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useMission } from "../hooks/useMission";
 import BombView from "../components/BombView";
@@ -21,9 +21,18 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
         setFilter(event.target.value);
     };
 
+    console.log(mission);
     return (
         <Box sx={{ mb: 10 }}>
-            <Box sx={{ mb: 2 }}>
+            <Box
+                sx={{
+                    my: 2,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    gap: 2,
+                }}
+            >
                 <FormControl variant="outlined" size="small" sx={{ minWidth: 200 }}>
                     <InputLabel>View Style</InputLabel>
                     <Select
@@ -63,6 +72,16 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
             <Typography variant="subtitle1" gutterBottom>
                 By {mission.authors?.join(', ') || 'Unknown'} | Pack: {mission.pack_name}
             </Typography>
+            {
+                mission.factory &&
+                <Typography variant="subtitle2" gutterBottom>
+                    Factory {mission.factory} | Strikes {mission.strike_mode} | Time {mission.time_mode}
+                </Typography>
+            }
+            {
+                !mission.verified &&
+                <Chip label={`Unverified`} size="small" sx={{ pt: 0.35, backgroundColor: "#e74c3c" }} />
+            }
             <Tabs
                 value={tabIndex}
                 onChange={(_, newValue) => setTabIndex(newValue)}
@@ -76,12 +95,12 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
             </Tabs>
             {mission.bombs.map((bomb, i) =>
                 i === tabIndex ? (
-                    <BombView 
-                        key={i} 
-                        bomb={bomb} 
-                        viewStyle={viewStyle} 
-                        filter={filter} 
-                        users={activeUsers} 
+                    <BombView
+                        key={i}
+                        bomb={bomb}
+                        viewStyle={viewStyle}
+                        filter={filter}
+                        users={activeUsers}
                         modulesData={modulesData}
                         authUser={authUser}
                     />
@@ -115,11 +134,11 @@ export default function MissionPage() {
     if (error) return <p>Error: {error.message}</p>;
     if (!mission) return <p>No mission found.</p>;
     return (
-        <MissionPageContent 
-            mission={mission} 
-            activeUsers={activeUsers} 
-            addUser={addUser} 
-            removeUser={removeUser} 
+        <MissionPageContent
+            mission={mission}
+            activeUsers={activeUsers}
+            addUser={addUser}
+            removeUser={removeUser}
             setDefuser={setDefuser}
             modulesData={modulesData}
         />
