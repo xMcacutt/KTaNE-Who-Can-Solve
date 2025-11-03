@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { truncate } from "../../utility"
 import { Card, CardContent, Box, Typography, Avatar, Stack, Grid } from "@mui/material";
+import ConfidenceInfo from "../small/ConfidenceInfo";
 
 function UserCard({
     user,
@@ -16,63 +17,21 @@ function UserCard({
                 <Box>
                     <Typography variant="subtitle2">Defuser:</Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                                component="img"
-                                src="icons/confident.png"
-                                alt="Confident"
-                                sx={{ height: "0.9em" }}
-                            />
-                            <Typography variant="body2">
-                                {user.defuser_confident}
-                            </Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                                component="img"
-                                src="icons/attempted.png"
-                                alt="Attempted"
-                                sx={{ height: "0.9em" }}
-                            />
-                            <Typography variant="body2">{user.defuser_attempted}</Typography>
-                        </Stack>
+                        <ConfidenceInfo type="confident" count={user.defuser_confident} />
+                        <ConfidenceInfo type="attempted" count={user.defuser_attempted} />
                     </Stack>
                 </Box>
                 <Box>
                     <Typography variant="subtitle2">Expert:</Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                                component="img"
-                                src="icons/confident.png"
-                                alt="Confident"
-                                sx={{ height: "0.9em" }}
-                            />
-                            <Typography variant="body2">{user.expert_confident}</Typography>
-                        </Stack>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                                component="img"
-                                src="icons/attempted.png"
-                                alt="Attempted"
-                                sx={{ height: "0.9em" }}
-                            />
-                            <Typography variant="body2">{user.expert_attempted}</Typography>
-                        </Stack>
+                        <ConfidenceInfo type="confident" count={user.expert_confident} />
+                        <ConfidenceInfo type="attempted" count={user.expert_attempted} />
                     </Stack>
                 </Box>
                 <Box>
                     <Typography variant="subtitle2">Solo:</Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Box
-                                component="img"
-                                src="icons/confident.png"
-                                alt="Confident"
-                                sx={{ height: "0.9em" }}
-                            />
-                            <Typography variant="body2">{user.solo_count}</Typography>
-                        </Stack>
+                        <ConfidenceInfo type="solo" count={user.solo_count} />
                     </Stack>
                 </Box>
             </Stack>
@@ -120,9 +79,9 @@ function UserCard({
                                 </Box>
                             </Box>
                         </Stack>
-                                <Stack direction="row" spacing={4} mt={1}>
-                                    {renderConfidences()}
-                                </Stack>
+                        <Stack direction="row" spacing={4} mt={1}>
+                            {renderConfidences()}
+                        </Stack>
                     </Grid>
                 </Grid>
             </CardContent>

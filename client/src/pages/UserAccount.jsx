@@ -198,6 +198,11 @@ function UserAccount() {
                                 ))}
                             </Stack>
                         </Box>
+
+                        <Box>
+                            <Typography variant="subtitle2">Solo</Typography>
+                            <ConfidenceInfo key="solo" type="solo" count={stats.solo} />
+                        </Box>
                     </Stack>
                 </Box>
 

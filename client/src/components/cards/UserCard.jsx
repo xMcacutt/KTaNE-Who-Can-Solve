@@ -30,7 +30,7 @@ function UserCard({
                 <Box>
                     <Typography variant="subtitle2">Solo:</Typography>
                     <Stack direction="row" spacing={1} alignItems="center">
-                        <ConfidenceInfo type="confident" count={user.solo_count}/>
+                        <ConfidenceInfo type="solo" count={user.solo_count}/>
                     </Stack>
                 </Box>
             </Stack>

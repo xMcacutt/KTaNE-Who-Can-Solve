@@ -67,10 +67,12 @@ export function useUserAccount(profileId) {
     const stats = {
       defuser: { Confident: 0, Attempted: 0, Unknown: 0, Avoid: 0 },
       expert: { Confident: 0, Attempted: 0, Unknown: 0, Avoid: 0 },
+      solo: 0
     };
     Object.values(localScores).forEach((score) => {
       stats.defuser[score.defuserConfidence || "Unknown"]++;
       stats.expert[score.expertConfidence || "Unknown"]++;
+      stats.solo += score.canSolo ? 1 : 0;
     });
     stats.defuser.Unknown = totalModules - (stats.defuser.Confident + stats.defuser.Attempted + stats.defuser.Avoid);
     stats.expert.Unknown = totalModules - (stats.expert.Confident + stats.expert.Attempted + stats.expert.Avoid);

@@ -56,15 +56,21 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
     const defuser = effectiveUsers.find(u => u.isDefuser);
     const experts = effectiveUsers.filter(u => !u.isDefuser);
 
+    const defuserScores = defuser.scores?.find(s => s.module_id === module.module_id);
     const defuserConf = defuser
-        ? (defuser.scores?.find(s => s.module_id === module.module_id)?.defuser_confidence || "Unknown")
+        ? (defuserScores?.defuser_confidence || "Unknown")
         : "Unknown";
     const expertConfs = experts.map(e => e.scores?.find(s => s.module_id === module.module_id)?.expert_confidence || "Unknown");
 
     let summaryIcon = confidenceIcons.Avoid;
     const anyExpertConfident = expertConfs.includes("Confident");
-    if (defuserConf === "Confident" && anyExpertConfident) summaryIcon = confidenceIcons.Confident;
-    else if (defuserConf === "Confident" || anyExpertConfident) summaryIcon = confidenceIcons.Attempted;
+    if (defuserScores?.can_solo)
+        summaryIcon = confidenceIcons.Solo
+    else if 
+        (defuserConf === "Confident" && anyExpertConfident) summaryIcon = confidenceIcons.Confident;
+    else if 
+        (defuserConf === "Confident" || anyExpertConfident) summaryIcon = confidenceIcons.Attempted;
+    
 
     const cardBg =
         viewStyle === "Difficulty Heatmap"
@@ -184,7 +190,7 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                             const score =
                                 user.scores?.find((s) => s.module_id === module.module_id) || {};
                             const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
-                            const iconSrc =
+                            var iconSrc =
                                 conf === "Confident"
                                     ? confidenceIcons.Confident
                                     : conf === "Attempted"
@@ -192,7 +198,7 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                                         : conf === "Avoid"
                                             ? confidenceIcons.Avoid
                                             : confidenceIcons.Unknown;
-                            const brightness =
+                            var brightness =
                                 conf === "Confident"
                                     ? 1.0
                                     : conf === "Attempted"
@@ -200,6 +206,13 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                                         : conf === "Avoid"
                                             ? 0.1
                                             : 0.4;
+
+                            if (user.isDefuser && score.can_solo) {
+                                iconSrc = confidenceIcons.Solo;
+                                brightness = 1.0;
+                            }
+
+                            
 
                             return (
                                 <Box

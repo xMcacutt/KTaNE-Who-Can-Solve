@@ -32,6 +32,7 @@ export const confidenceIcons = {
     Attempted: "/icons/attempted.png",
     Confident: "/icons/confident.png",
     Avoid: "/icons/avoid.png",
+    Solo: "/icons/solo.png"
 };
 
 export const difficultyMap = {

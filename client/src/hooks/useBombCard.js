@@ -163,7 +163,7 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
         totalModules,
         totalTime,
         sortedModuleIds,
-        userModuleStats,
+        userModuleStats
     };
 
 };

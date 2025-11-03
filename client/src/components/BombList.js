@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo, use } from "react";
 import { IconButton, Box, MenuItem, Select, Accordion, AccordionDetails, AccordionSummary, InputLabel, useTheme, useMediaQuery, FormControl, Typography, TextField, CircularProgress, Alert } from "@mui/material";
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useQuery } from "@tanstack/react-query";
@@ -8,6 +8,8 @@ import BombCard from "./cards/BombCard";
 import { useAuth } from "../context/AuthContext";
 import { useActiveUsers } from "../context/ActiveUsersContext";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import MissionFilterPanel from "./small/MissionFilterPanel";
+import FilterIcon from '@mui/icons-material/FilterList';
 
 export function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -22,22 +24,27 @@ export default function BombList() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-    let savedFilters = {};
-    try {
-        savedFilters = JSON.parse(localStorage.getItem("mission_filters")) || {};
-    } catch {
-        savedFilters = {};
-    }
+    const getSavedFilters = () => {
+        try {
+            return JSON.parse(localStorage.getItem("mission_filters")) || {};
+        } catch {
+            return {};
+        }
+    };
+
+    const savedFilters = getSavedFilters();
     const [sort, setSort] = useState(savedFilters.sort || "date_added");
     const [order, setOrder] = useState(savedFilters.order || "ascending");
-    const [favesFilter, setFavesFilter] = useState(savedFilters.favesFilter || "all");
     const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("bomb_search") || "");
+    const [filters, setFilters] = useState(savedFilters.filters || {});
+    const [filterPanelOpen, setFilterPanelOpen] = useState(false);
     const [panelOpen, setPanelOpen] = useState(false);
 
     useEffect(() => {
-        const filters = { sort, order, favesFilter, searchTerm };
-        localStorage.setItem("mission_filters", JSON.stringify(filters));
-    }, [sort, order, favesFilter, searchTerm]);
+        const current = getSavedFilters();
+        const updated = { ...current, sort, order, filters, searchTerm };
+        localStorage.setItem("mission_filters", JSON.stringify(updated));
+    }, [sort, order, filters, searchTerm]);
 
     useEffect(() => {
         sessionStorage.setItem("bomb_search", searchTerm);
@@ -57,15 +64,19 @@ export default function BombList() {
     }, [activeUsers]);
 
     const { data: missions = [], isLoading, error, refetch } = useQuery({
-        queryKey: ["missions", debouncedSearchTerm, sort, order, teamKey],
+        queryKey: ["missions", debouncedSearchTerm, sort, order, teamKey, filters],
         queryFn: async () => {
             const params = new URLSearchParams({ search: debouncedSearchTerm, sort, order });
+
             let body = null;
             let method = "GET";
-            const teamData = sort === "known_modules" ? teamKey : null;
+            const teamData = teamKey ;
             const discordId = authUser ? authUser.id : null;
 
-            if (teamData && teamData.length > 0) {
+            if (filters && Object.keys(filters).length > 0) {
+                method = "POST";
+                body = JSON.stringify({ filters, team: teamData, discordId });
+            } else if (teamData && teamData.length > 0) {
                 method = "POST";
                 body = JSON.stringify({ team: teamData, discordId });
             } else if (discordId) {
@@ -74,26 +85,19 @@ export default function BombList() {
 
             const res = await fetch(`/api/missions?${params.toString()}`, {
                 method,
-                headers: body ? { "Content-Type": "application/json" } : {},
+                headers: { "Content-Type": "application/json" },
                 body,
             });
 
             if (!res.ok) throw new Error("Failed to fetch missions");
             return res.json();
         },
-        keepPreviousData: true,
-        staleTime: 5 * 60 * 1000,
     });
 
     const filteredMissions = React.useMemo(() => {
         if (!missions) return [];
-
-        return missions.filter((m) => {
-            if (favesFilter === "only_faves") return m.is_favourite;
-            if (favesFilter === "no_faves") return !m.is_favourite;
-            return true;
-        });
-    }, [missions, favesFilter]);
+        else return missions;
+    }, [missions, filters]);
 
     const { data: authScores = [] } = useQuery({
         queryKey: ["userScores", authUser?.id],
@@ -133,18 +137,9 @@ export default function BombList() {
                 </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel>Favourites</InputLabel>
-                <Select
-                    label="Favourites"
-                    value={favesFilter}
-                    onChange={(e) => setFavesFilter(e.target.value)}
-                >
-                    <MenuItem value="all">Show All</MenuItem>
-                    <MenuItem value="no_faves">No Favourites</MenuItem>
-                    <MenuItem value="only_faves">Only Favourites</MenuItem>
-                </Select>
-            </FormControl>
+            <IconButton onClick={() => setFilterPanelOpen(true)}>
+                <FilterIcon />
+            </IconButton>
         </Box>
     )
 
@@ -271,6 +266,21 @@ export default function BombList() {
                         onSetDefuser={setDefuser}
                     />
                 )}
+
+                <MissionFilterPanel
+                    open={filterPanelOpen}
+                    onClose={() => setFilterPanelOpen(false)}
+                    onApply={(newFilters) => {
+                        setFilters(newFilters);
+                        setFilterPanelOpen(false);
+                        const current = JSON.parse(localStorage.getItem("mission_filters")) || {};
+                        localStorage.setItem(
+                            "mission_filters",
+                            JSON.stringify({ ...current, filters: newFilters })
+                        );
+                    }}
+                    initialFilters={filters}
+                />
             </Box>
         </Box>
     );
