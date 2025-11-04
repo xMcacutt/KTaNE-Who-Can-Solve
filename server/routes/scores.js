@@ -243,4 +243,81 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     }
 });
 
+router.post("/mission", async (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Not authenticated" });
+    }
+
+    try {
+        const userId = req.user.discord_id;
+        const { type, missionId } = req.body;
+
+        if (!type || !missionId) {
+            return res.status(400).json({ message: "Missing type or missionId" });
+        }
+
+        const missionRes = await pool.query(
+            `SELECT bombs FROM missions WHERE id = $1 LIMIT 1`,
+            [missionId]
+        );
+
+        if (missionRes.rowCount === 0) {
+            return res.status(404).json({ message: "Mission not found" });
+        }
+
+        let bombs;
+        try {
+            bombs = Array.isArray(missionRes.rows[0].bombs)
+                ? missionRes.rows[0].bombs
+                : JSON.parse(missionRes.rows[0].bombs || "[]");
+        } catch {
+            bombs = [];
+        }
+
+        const uniqueModuleIds = [
+            ...new Set(
+                bombs.flatMap(b =>
+                    b.pools?.flatMap(p =>
+                        p.modules.map(m =>
+                            typeof m === "string" ? m : m.module_id || m.id
+                        )
+                    ) || []
+                )
+            ),
+        ];
+
+        if (uniqueModuleIds.length === 0) {
+            return res.status(400).json({ message: "No modules found in mission" });
+        }
+
+        const confidenceColumn =
+            type === "defuser"
+                ? "defuser_confidence"
+                : type === "expert"
+                    ? "expert_confidence"
+                    : null;
+
+        if (!confidenceColumn) {
+            return res.status(400).json({ message: "Invalid type" });
+        }
+
+        const query = `
+            INSERT INTO user_module_scores (user_id, module_id, ${confidenceColumn})
+            SELECT $1, id, 'Confident' FROM unnest($2::text[]) AS id
+            ON CONFLICT (user_id, module_id)
+            DO UPDATE SET ${confidenceColumn} = EXCLUDED.${confidenceColumn};
+        `;
+
+        await pool.query(query, [userId, uniqueModuleIds]);
+
+        res.json({
+            message: `${type} confidences set successfully for ${uniqueModuleIds.length} modules.`,
+            updated: uniqueModuleIds.length,
+        });
+    } catch (err) {
+        console.error("Error setting mission confidences:", err.message);
+        res.status(500).json({ message: "Server could not set mission confidences" });
+    }
+});
+
 export default router;

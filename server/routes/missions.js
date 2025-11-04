@@ -92,7 +92,6 @@ const fetchMissions = async (req) => {
 
     const needsKnown = sort === "known_modules" || Array.isArray(filters.knownPercentRange);
 
-    console.log(needsKnown, Array.isArray(team), team.length > 0);
     if (needsKnown && Array.isArray(team) && team.length > 0) {
         const userIds = team.map((u) => u.id);
         const userScoresRes = await pool.query(
@@ -157,7 +156,6 @@ const fetchMissions = async (req) => {
             const avgExpert = expertCount > 0 ? expertTotal / expertCount : 0;
             const weightedAverage = defuserScore * 0.6 + avgExpert * 0.4;
 
-            console.log(`Weighted average for ${mission.mission_name}: ${weightedAverage}`);
             return { ...mission, known_percentage: weightedAverage };
         });
     }

@@ -21,8 +21,8 @@ export function useMission() {
         },
     });
 
-    const allModuleIds = mission ? 
-        [...new Set(mission.bombs.flatMap(bomb => 
+    const allModuleIds = mission ?
+        [...new Set(mission.bombs.flatMap(bomb =>
             bomb.pools?.flatMap(pool => pool.modules) || []
         ))] : [];
 
@@ -83,6 +83,57 @@ export function useMission() {
         });
     }, [usersParam, activeUsers, setActiveUsers, loaded]);
 
+    async function refetchScores() {
+        try {
+            const ids = activeUsers
+                .map(u => u.id || u._id || u.user_id)
+                .filter(Boolean);
+
+            if (ids.length === 0) {
+                console.warn("refetchScores: no active users to refresh");
+                return;
+            }
+
+            const newUsers = await Promise.all(
+                ids.map(async (id) => {
+                    const resUser = await fetch(`/api/users/${id}`);
+                    if (!resUser.ok) {
+                        console.warn(`refetchScores: failed to fetch user ${id}`);
+                        return null;
+                    }
+                    const userData = await resUser.json();
+
+                    const resScores = await fetch(`/api/users/${id}/scores`);
+                    if (!resScores.ok) {
+                        console.warn(`refetchScores: failed to fetch scores for ${id}`);
+                        return { ...userData, scores: [] };
+                    }
+                    const scores = await resScores.json();
+                    return { ...userData, scores: Array.isArray(scores) ? scores : [], isDefuser: false };
+                })
+            );
+
+            const filtered = newUsers.filter(Boolean);
+
+            if (filtered.length > 0) {
+                const prevDefuserId = activeUsers.find(u => u.isDefuser)?.id;
+                const withDefuser = filtered.map(u => ({
+                    ...u,
+                    isDefuser: u.id === prevDefuserId
+                }));
+
+                const stamped = withDefuser.map(u => ({ ...u, scoresUpdatedAt: Date.now() }));
+
+                setActiveUsers([...stamped]);
+            } else {
+                console.warn("refetchScores: no users returned from fetch");
+            }
+        } catch (err) {
+            console.error("refetchScores failed:", err);
+        }
+    }
+
+
     const isLoading = missionLoading || modulesLoading;
     const error = missionError || modulesError;
 
@@ -93,6 +144,7 @@ export function useMission() {
         addUser,
         removeUser,
         setDefuser,
+        refetchScores,
         isLoading,
         error
     };

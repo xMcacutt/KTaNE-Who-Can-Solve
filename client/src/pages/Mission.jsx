@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { Box, Typography, Chip, Tabs, Tab, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
+import { Box, Typography, Chip, Tabs, Tab, Button, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useMission } from "../hooks/useMission";
 import BombView from "../components/BombView";
 import UserPanel from "../components/small/UserPanel";
 import { useAuth } from "../context/AuthContext";
+import BombConfDialog from '../components/small/BombConfDialog';
 
-function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefuser, modulesData }) {
+function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefuser, modulesData, refetchScores }) {
     const [tabIndex, setTabIndex] = useState(0);
     const [viewStyle, setViewStyle] = useState('Large Icons');
     const [filter, setFilter] = useState('Show All');
     const [panelOpen, setPanelOpen] = useState(false);
     const { authUser } = useAuth();
+    const [dialogType, setDialogType] = useState(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const handleViewStyleChange = (event) => {
         setViewStyle(event.target.value);
@@ -19,6 +22,11 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
 
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
+    };
+
+    const handleOpenDialog = (type) => {
+        setDialogType(type);
+        setDialogOpen(true);
     };
 
     console.log(mission);
@@ -57,6 +65,18 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
                         <MenuItem value="Only Unknown">Only Unknown</MenuItem>
                     </Select>
                 </FormControl>
+                {
+                    authUser && 
+                    <Button variant="outlined" onClick={() => handleOpenDialog("expert")}>
+                        Set Expert Confident
+                    </Button>
+                }
+                {
+                    authUser &&
+                    <Button variant="outlined" onClick={() => handleOpenDialog("defuser")}>
+                        Set Defuser Confident
+                    </Button>
+                }
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="h4" gutterBottom>
@@ -114,6 +134,13 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
                 onRemoveUser={removeUser}
                 onSetDefuser={setDefuser}
             />
+            <BombConfDialog
+                open={dialogOpen}
+                type={dialogType}
+                mission={mission}
+                onClose={() => setDialogOpen(false)}
+                refetchScores={refetchScores}
+            />
         </Box>
     );
 }
@@ -126,8 +153,9 @@ export default function MissionPage() {
         addUser,
         removeUser,
         setDefuser,
+        refetchScores,
         isLoading,
-        error
+        error,
     } = useMission();
 
     if (isLoading) return <p>Loading mission...</p>;
@@ -141,6 +169,7 @@ export default function MissionPage() {
             removeUser={removeUser}
             setDefuser={setDefuser}
             modulesData={modulesData}
+            refetchScores={refetchScores} 
         />
     );
 }
