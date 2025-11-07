@@ -10,6 +10,7 @@ import { useActiveUsers } from "../context/ActiveUsersContext";
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import MissionFilterPanel from "./small/MissionFilterPanel";
 import FilterIcon from '@mui/icons-material/FilterList';
+import { DEFAULT_FILTERS } from "./small/MissionFilterPanel";
 
 export function useDebounce(value, delay) {
     const [debouncedValue, setDebouncedValue] = useState(value);
@@ -26,9 +27,11 @@ export default function BombList() {
 
     const getSavedFilters = () => {
         try {
-            return JSON.parse(localStorage.getItem("mission_filters")) || {};
+            const saved = JSON.parse(localStorage.getItem("mission_filters"));
+            if (saved && saved.filters) return saved;
+            return { filters: DEFAULT_FILTERS };
         } catch {
-            return {};
+            return { filters: DEFAULT_FILTERS };
         }
     };
 
@@ -36,7 +39,7 @@ export default function BombList() {
     const [sort, setSort] = useState(savedFilters.sort || "date_added");
     const [order, setOrder] = useState(savedFilters.order || "ascending");
     const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("bomb_search") || "");
-    const [filters, setFilters] = useState(savedFilters.filters || {});
+    const [filters, setFilters] = useState(savedFilters.filters);
     const [filterPanelOpen, setFilterPanelOpen] = useState(false);
     const [panelOpen, setPanelOpen] = useState(false);
 
@@ -70,7 +73,7 @@ export default function BombList() {
 
             let body = null;
             let method = "GET";
-            const teamData = teamKey ;
+            const teamData = teamKey;
             const discordId = authUser ? authUser.id : null;
 
             if (filters && Object.keys(filters).length > 0) {
@@ -151,7 +154,7 @@ export default function BombList() {
             const currentDefuser = prev.find((u) => u.isDefuser);
             const userWithScores = {
                 ...authUser,
-                scores: authScores,
+                scores: authScores || [],
                 isDefuser: currentDefuser
                     ? exists?.isDefuser ?? false
                     : true,
@@ -159,7 +162,7 @@ export default function BombList() {
 
             const same =
                 exists &&
-                JSON.stringify(exists.scores) === JSON.stringify(authScores) &&
+                JSON.stringify(exists.scores || []) === JSON.stringify(authScores || []) &&
                 exists.isDefuser === userWithScores.isDefuser;
 
             if (same) return prev;

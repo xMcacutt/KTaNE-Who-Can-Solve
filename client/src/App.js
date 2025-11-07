@@ -26,8 +26,8 @@ function App() {
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <QueryClientProvider client={queryClient}>
-                <ActiveUsersProvider>
-                    <AuthProvider>
+                <AuthProvider>
+                    <ActiveUsersProvider>
                         <Routes>
                             <Route element={<Layout />}>
                                 <Route index element={<Home />} />
@@ -74,8 +74,8 @@ function App() {
                                 <Route path="*" element={<p>Not found</p>} />
                             </Route>
                         </Routes>
-                    </AuthProvider>
-                </ActiveUsersProvider>
+                    </ActiveUsersProvider>
+                </AuthProvider>
             </QueryClientProvider>
         </ThemeProvider>
     );

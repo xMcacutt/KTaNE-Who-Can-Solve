@@ -122,6 +122,10 @@ export function useMission() {
                     isDefuser: u.id === prevDefuserId
                 }));
 
+                if (!withDefuser.some(u => u.isDefuser) && withDefuser.length > 0) {
+                    withDefuser[0].isDefuser = true;
+                }
+
                 const stamped = withDefuser.map(u => ({ ...u, scoresUpdatedAt: Date.now() }));
 
                 setActiveUsers([...stamped]);

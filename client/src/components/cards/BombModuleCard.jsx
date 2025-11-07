@@ -53,24 +53,22 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
         ];
     }
 
-    const defuser = effectiveUsers.find(u => u.isDefuser);
+    const defuser = effectiveUsers.find(u => u.isDefuser) || null;
     const experts = effectiveUsers.filter(u => !u.isDefuser);
 
-    const defuserScores = defuser.scores?.find(s => s.module_id === module.module_id);
-    const defuserConf = defuser
-        ? (defuserScores?.defuser_confidence || "Unknown")
-        : "Unknown";
+    const defuserScores = defuser?.scores?.find(s => s.module_id === module.module_id);
+    const defuserConf = defuserScores?.defuser_confidence || "Unknown";
     const expertConfs = experts.map(e => e.scores?.find(s => s.module_id === module.module_id)?.expert_confidence || "Unknown");
 
     let summaryIcon = confidenceIcons.Avoid;
     const anyExpertConfident = expertConfs.includes("Confident");
     if (defuserScores?.can_solo)
         summaryIcon = confidenceIcons.Solo
-    else if 
+    else if
         (defuserConf === "Confident" && anyExpertConfident) summaryIcon = confidenceIcons.Confident;
-    else if 
+    else if
         (defuserConf === "Confident" || anyExpertConfident) summaryIcon = confidenceIcons.Attempted;
-    
+
 
     const cardBg =
         viewStyle === "Difficulty Heatmap"
@@ -176,93 +174,94 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                             </Typography>
                         </Link>
                     </Box>
+                    {
+                        authUser && users.length > 0 && (
+                            <Box
+                                sx={{
+                                    width: "40%",
+                                    display: "flex",
+                                    mr: 2,
+                                    alignItems: "center",
+                                    justifyContent: "flex-start",
+                                }}
+                            >
+                                {effectiveUsers.map((user, i) => {
+                                    const score =
+                                        user.scores?.find((s) => s.module_id === module.module_id) || {};
+                                    const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
+                                    var iconSrc =
+                                        conf === "Confident"
+                                            ? confidenceIcons.Confident
+                                            : conf === "Attempted"
+                                                ? confidenceIcons.Attempted
+                                                : conf === "Avoid"
+                                                    ? confidenceIcons.Avoid
+                                                    : confidenceIcons.Unknown;
+                                    var brightness =
+                                        conf === "Confident"
+                                            ? 1.0
+                                            : conf === "Attempted"
+                                                ? 0.8
+                                                : conf === "Avoid"
+                                                    ? 0.1
+                                                    : 0.4;
 
-                    <Box
-                        sx={{
-                            width: "40%",
-                            display: "flex",
-                            mr: 2,
-                            alignItems: "center",
-                            justifyContent: "flex-start",
-                        }}
-                    >
-                        {users.map((user, i) => {
-                            const score =
-                                user.scores?.find((s) => s.module_id === module.module_id) || {};
-                            const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
-                            var iconSrc =
-                                conf === "Confident"
-                                    ? confidenceIcons.Confident
-                                    : conf === "Attempted"
-                                        ? confidenceIcons.Attempted
-                                        : conf === "Avoid"
-                                            ? confidenceIcons.Avoid
-                                            : confidenceIcons.Unknown;
-                            var brightness =
-                                conf === "Confident"
-                                    ? 1.0
-                                    : conf === "Attempted"
-                                        ? 0.8
-                                        : conf === "Avoid"
-                                            ? 0.1
-                                            : 0.4;
+                                    if (user.isDefuser && score.can_solo) {
+                                        iconSrc = confidenceIcons.Solo;
+                                        brightness = 1.0;
+                                    }
 
-                            if (user.isDefuser && score.can_solo) {
-                                iconSrc = confidenceIcons.Solo;
-                                brightness = 1.0;
-                            }
-
-                            
-
-                            return (
-                                <Box
-                                    key={i}
-                                    sx={{
-                                        position: "relative",
-                                        flex: 1,
-                                        display: "flex",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    <Tooltip title={user.name}>
-                                        <Avatar
-                                            src={user.avatar}
+                                    return (
+                                        <Box
+                                            key={i}
                                             sx={{
-                                                filter: `brightness(${brightness})`,
-                                                width: isMobile ? 28 : 48,
-                                                height: isMobile ? 28 : 48,
+                                                position: "relative",
+                                                flex: 1,
+                                                display: "flex",
+                                                justifyContent: "center",
                                             }}
-                                        />
-                                    </Tooltip>
-                                    <Box
-                                        component="img"
-                                        src={iconSrc}
-                                        sx={{
-                                            position: "absolute",
-                                            width: isMobile ? 18 : 24,
-                                            height: isMobile ? 18 : 24,
-                                            transform: "translate(90%, 90%)",
-                                        }}
-                                    />
-                                    {
-                                        user.isDefuser && (
-                                            <Tooltip title="Defuser">
-                                                <Box cursor="pointer"
-                                                    component={BombIcon}
+                                        >
+                                            <Tooltip title={user.name}>
+                                                <Avatar
+                                                    src={user.avatar}
                                                     sx={{
-                                                        position: "absolute",
-                                                        width: isMobile ? 18 : 24,
-                                                        height: isMobile ? 18 : 24,
-                                                        transform: "translate(-90%, -30%)",
+                                                        filter: `brightness(${brightness})`,
+                                                        width: isMobile ? 28 : 48,
+                                                        height: isMobile ? 28 : 48,
                                                     }}
                                                 />
                                             </Tooltip>
-                                        )
-                                    }
-                                </Box>
-                            );
-                        })}
-                    </Box>
+                                            <Box
+                                                component="img"
+                                                src={iconSrc}
+                                                sx={{
+                                                    position: "absolute",
+                                                    width: isMobile ? 18 : 24,
+                                                    height: isMobile ? 18 : 24,
+                                                    transform: "translate(90%, 90%)",
+                                                }}
+                                            />
+                                            {
+                                                user.isDefuser && (
+                                                    <Tooltip title="Defuser">
+                                                        <Box cursor="pointer"
+                                                            component={BombIcon}
+                                                            sx={{
+                                                                position: "absolute",
+                                                                width: isMobile ? 18 : 24,
+                                                                height: isMobile ? 18 : 24,
+                                                                transform: "translate(-90%, -30%)",
+                                                            }}
+                                                        />
+                                                    </Tooltip>
+                                                )
+                                            }
+                                        </Box>
+                                    );
+                                })}
+                            </Box>
+                        )
+                    }
 
                     <Box
                         sx={{

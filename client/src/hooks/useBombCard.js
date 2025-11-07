@@ -106,7 +106,7 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
         if (!Array.isArray(users) || !users.length) return [];
 
         const defuser = users.find((u) => u.isDefuser);
-        const defuserScores = defuser?.scores || [];
+        const defuserScores = Array.isArray(defuser?.scores) ? defuser.scores : [];
 
         const soloableModulesInMission = defuserScores
             .filter((s) => s.can_solo && allModuleIds.includes(s.module_id))

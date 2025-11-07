@@ -17,6 +17,19 @@ import {
 
 const currentYear = new Date().getFullYear();
 
+export const DEFAULT_FILTERS = {
+    difficultyRange: [0, 30],
+    knownPercentRange: [0, 100],
+    moduleCountRange: [47, 200],
+    possibleModuleCountRange: [47, 300],
+    showFactorySequence: true,
+    showFactoryStatic: true,
+    showFactoryNone: true,
+    favesFilter: "all",
+    dateRange: [2015, new Date().getFullYear()],
+    moduleSearch: "",
+};
+
 export default function MissionFilterPanel({
     open,
     onClose,
