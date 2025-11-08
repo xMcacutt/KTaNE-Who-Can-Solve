@@ -56,9 +56,14 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
     const defuser = effectiveUsers.find(u => u.isDefuser) || null;
     const experts = effectiveUsers.filter(u => !u.isDefuser);
 
-    const defuserScores = defuser?.scores?.find(s => s.module_id === module.module_id);
+    const defuserScores = Array.isArray(defuser?.scores)
+        ? defuser.scores.find(s => s.module_id === module.module_id)
+        : undefined;
     const defuserConf = defuserScores?.defuser_confidence || "Unknown";
-    const expertConfs = experts.map(e => e.scores?.find(s => s.module_id === module.module_id)?.expert_confidence || "Unknown");
+    const expertConfs = experts.map(e => {
+        const scores = Array.isArray(e.scores) ? e.scores : [];
+        return scores.find(s => s.module_id === module.module_id)?.expert_confidence || "Unknown";
+    });
 
     let summaryIcon = confidenceIcons.Avoid;
     const anyExpertConfident = expertConfs.includes("Confident");
@@ -186,8 +191,8 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                                 }}
                             >
                                 {effectiveUsers.map((user, i) => {
-                                    const score =
-                                        user.scores?.find((s) => s.module_id === module.module_id) || {};
+                                    const userScores = Array.isArray(user.scores) ? user.scores : [];
+                                    const score = userScores.find(s => s.module_id === module.module_id) || {};
                                     const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
                                     var iconSrc =
                                         conf === "Confident"
