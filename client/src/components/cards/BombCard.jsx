@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Card, CardContent, Typography, Box, Stack, Link, useTheme, useMediaQuery, Chip, Grid, CircularProgress, Avatar, IconButton } from "@mui/material";
+import { Card, CardContent, Typography, Box, Tooltip, Stack, Link, useTheme, useMediaQuery, Chip, Grid, CircularProgress, Avatar, IconButton } from "@mui/material";
 import StarIcon from "@mui/icons-material/StarBorder";
 import StarFilledIcon from "@mui/icons-material/Star";
 import { formatTime } from "../../utility";
 import { truncate } from "../../utility";
 import ModuleIcon from "../small/ModuleIcon";
 import useBombCard from "../../hooks/useBombCard";
-import { useNavigate } from "react-router-dom";
-
+import { Link as RouterLink } from "react-router-dom";
+import { ReactComponent as BombIcon } from '../../assets/Bomb.svg';
 
 function BombCard({
     mission,
@@ -15,11 +15,8 @@ function BombCard({
     sort,
     onFavouriteChanged,
     authUser,
-    filters
 }) {
-    const navigate = useNavigate();
     const {
-        bombs,
         missionPageUrl,
         isFavourite,
         handleFavouriteSet,
@@ -48,7 +45,6 @@ function BombCard({
                     flexDirection: "row",
                     flexWrap: "wrap",
                     alignItems: "center",
-                    justifyContent: "space-between",
                     flexGrow: 1,
                     zIndex: 1,
                     width: "100%",
@@ -62,7 +58,8 @@ function BombCard({
                     sx={{
                         display: "flex",
                         alignItems: "center",
-                        flex: "1 1 50%",
+                        flex: { xs: "1 1 100%", md: "1 1 45%" },
+                        minWidth: 0,
                         overflow: "hidden",
                     }}
                 >
@@ -91,14 +88,8 @@ function BombCard({
                     >
                         <Box ml={2}>
 
-                            <Link underline="hover">
-
-                                <Typography
-                                    variant="h6"
-                                    noWrap
-                                    sx={{ cursor: "pointer" }}
-                                    onClick={() => navigate(missionPageUrl)}
-                                >
+                            <Link component={RouterLink} to={missionPageUrl} underline="hover">
+                                <Typography variant="h6" noWrap sx={{ cursor: "pointer" }}>
                                     {mission.mission_name}
                                 </Typography>
                             </Link>
@@ -169,30 +160,68 @@ function BombCard({
                 </Box>
                 <Box
                     sx={{
-                        flex: "1 1 auto",
+                        flex: { xs: "1 1 100%", md: "1 1 35%" },
                         display: "flex",
+                        justifyContent: "center",
                         alignItems: "center",
                         overflow: "hidden",
+                        mt: { xs: 2, md: 0 },
                     }}
                 >
-                    <Box display="flex" justifyContent="flex-start">
-                        {
-                            authUser &&
-                            <Grid container spacing={1} sx={{ mt: 2 }}>
-                                {userModuleStats.map((u) => (
-                                    <Grid key={u.id} xs={3}>
-                                        <Box textAlign="center">
-                                            <Avatar src={u.avatar} sx={{ mx: "auto", mb: 1 }} />
-                                            <Typography variant="body2">{truncate(u.name, 10)}</Typography>
-                                            <Typography variant="caption" fontSize="1.2rem">
-                                                {u.knownCount}/{u.totalModules}
-                                            </Typography>
-                                        </Box>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        }
-                    </Box>
+                    {authUser && (
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                justifyContent: "center",
+                                alignItems: "flex-start",
+                                gap: 2,
+                                mt: 2,
+                                width: "100%",
+                            }}
+                        >
+                            {userModuleStats.map((u) => (
+                                <Box key={u.id} textAlign="center">
+                                    <Box
+                                        sx={{
+                                            position: "relative",
+                                            display: "flex",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        <Tooltip title={u.name}>
+                                            <Avatar
+                                                src={u.avatar}
+                                                sx={{
+                                                    width: 48,
+                                                    height: 48,
+                                                }}
+                                            />
+                                        </Tooltip>
+
+                                        {u.isDefuser && (
+                                            <Tooltip title="Defuser">
+                                                <Box
+                                                    cursor="pointer"
+                                                    component={BombIcon}
+                                                    sx={{
+                                                        position: "absolute",
+                                                        width: 24,
+                                                        height: 24,
+                                                        transform: "translate(-90%, -30%)",
+                                                    }}
+                                                />
+                                            </Tooltip>
+                                        )}
+                                    </Box>
+                                    <Typography variant="body2">{truncate(u.name, 10)}</Typography>
+                                    <Typography variant="caption" fontSize="1.2rem">
+                                        {u.knownCount}/{u.totalModules}
+                                    </Typography>
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
                 </Box>
                 <Box
                     sx={{
@@ -201,30 +230,54 @@ function BombCard({
                         alignItems: "center",
                         justifyContent: "flex-end",
                         mx: 2,
+                        minWidth: "fit-content",
                     }}
                 >
                     <Stack direction="row" spacing={-2}>
                         {isLoading ? (
                             <CircularProgress size={20} />
                         ) : (
-                            sortedModuleIds.reverse().map((moduleId, idx) => {
-                                const moduleData = modulesData[moduleId];
-                                if (!moduleData || !moduleData.icon_file_name) {
-                                    return null;
-                                }
-                                const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
-                                return (
-                                    <ModuleIcon key={moduleId} iconFileName={encodedModuleName} size={64} style={
-                                        {
-                                            filter: `brightness(${0.2 * (5 - idx)})`,
-                                            zIndex: 5 - idx,
-                                            imageRendering: 'pixelated'
+                            (() => {
+                                let visibleIndex = 0;
+                                return sortedModuleIds
+                                    .slice()
+                                    .reverse()
+                                    .map((moduleId, idx) => {
+                                        if (!moduleId) {
+                                            return (
+                                                <Box
+                                                    key={`empty-${idx}`}
+                                                    sx={{
+                                                        width: 64,
+                                                        height: 64,
+                                                        opacity: 0.05,
+                                                    }}
+                                                />
+                                            );
                                         }
-                                    } />
-                                );
-                            })
-                        )
-                        }
+
+                                        const moduleData = modulesData[moduleId];
+                                        if (!moduleData?.icon_file_name) return null;
+
+                                        const brightness = 1 - visibleIndex * 0.15;
+                                        visibleIndex += 1;
+
+                                        const encodedModuleName = encodeURIComponent(moduleData.icon_file_name);
+                                        return (
+                                            <ModuleIcon
+                                                key={moduleId}
+                                                iconFileName={encodedModuleName}
+                                                size={64}
+                                                style={{
+                                                    filter: `brightness(${brightness})`,
+                                                    zIndex: 5 - visibleIndex,
+                                                    imageRendering: "pixelated",
+                                                }}
+                                            />
+                                        );
+                                    });
+                            })()
+                        )}
                     </Stack>
                 </Box>
             </CardContent >

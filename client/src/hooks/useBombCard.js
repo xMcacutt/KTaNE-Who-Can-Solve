@@ -105,35 +105,35 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
     const userModuleStats = useMemo(() => {
         if (!Array.isArray(users) || !users.length) return [];
 
-        const defuser = users.find((u) => u.isDefuser);
+        let effectiveUsers = [...users];
+        if (users.length === 1) {
+            const single = users[0];
+            effectiveUsers = [
+                { ...single, isDefuser: true },
+                { ...single, isDefuser: false },
+            ];
+        }
+
+        const defuser = effectiveUsers.find(u => u.isDefuser);
         const defuserScores = Array.isArray(defuser?.scores) ? defuser.scores : [];
 
         const soloableModulesInMission = defuserScores
             .filter((s) => s.can_solo && allModuleIds.includes(s.module_id))
             .map((s) => s.module_id);
 
-        return users.map((u) => {
+        return effectiveUsers.map((u) => {
             const userScores = Array.isArray(u.scores) ? u.scores : [];
 
             const knownCount = allModuleIds.filter((moduleId) => {
                 const s = userScores.find((sc) => sc.module_id === moduleId);
                 const defuserS = defuserScores.find((sc) => sc.module_id === moduleId);
 
-                if (users.length === 1) {
-                    const defConf =
-                        s?.defuser_confidence === "Confident" ||
-                        s?.defuser_confidence === "Attempted";
-                    const expConf =
-                        s?.expert_confidence === "Confident" ||
-                        s?.expert_confidence === "Attempted";
-                    return defConf && expConf;
-                }
-
-                if (!u.isDefuser && defuserS?.can_solo) return false;
-
                 const conf = u.isDefuser
                     ? s?.defuser_confidence
                     : s?.expert_confidence;
+
+                if (!u.isDefuser && defuserS?.can_solo) return false;
+
                 return conf === "Confident" || conf === "Attempted";
             }).length;
 
@@ -152,6 +152,11 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
         });
     }, [users, bombs, modulesData]);
 
+    const paddedModuleIds = [
+        ...sortedModuleIds,
+        ...Array(Math.max(0, 5 - sortedModuleIds.length)).fill(null),
+    ];
+
     return {
         bombs,
         missionPageUrl,
@@ -162,7 +167,7 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
         formattedDate,
         totalModules,
         totalTime,
-        sortedModuleIds,
+        sortedModuleIds: paddedModuleIds,
         userModuleStats
     };
 
