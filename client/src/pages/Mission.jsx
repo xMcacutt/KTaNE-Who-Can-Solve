@@ -9,8 +9,12 @@ import BombConfDialog from '../components/small/BombConfDialog';
 
 function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefuser, modulesData, refetchScores }) {
     const [tabIndex, setTabIndex] = useState(0);
-    const [viewStyle, setViewStyle] = useState('Large Icons');
-    const [filter, setFilter] = useState('Show All');
+    const [viewStyle, setViewStyle] = useState(
+        localStorage.getItem("mission_view_style") || "Large Icons"
+    );
+    const [filter, setFilter] = useState(
+        localStorage.getItem("mission_view_filters") || "Show All"
+    );
     const [panelOpen, setPanelOpen] = useState(false);
     const { authUser } = useAuth();
     const [dialogType, setDialogType] = useState(null);
@@ -18,10 +22,12 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
 
     const handleViewStyleChange = (event) => {
         setViewStyle(event.target.value);
+        localStorage.setItem("mission_view_style", event.target.value);
     };
 
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
+        localStorage.setItem("mission_view_filters", event.target.value);
     };
 
     const handleOpenDialog = (type) => {
@@ -66,7 +72,7 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
                     </Select>
                 </FormControl>
                 {
-                    authUser && 
+                    authUser &&
                     <Button variant="outlined" onClick={() => handleOpenDialog("expert")}>
                         Set Expert Confident
                     </Button>
@@ -169,7 +175,7 @@ export default function MissionPage() {
             removeUser={removeUser}
             setDefuser={setDefuser}
             modulesData={modulesData}
-            refetchScores={refetchScores} 
+            refetchScores={refetchScores}
         />
     );
 }
