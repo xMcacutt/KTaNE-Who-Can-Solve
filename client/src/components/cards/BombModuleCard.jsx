@@ -171,7 +171,7 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                             sx={{ color: "white", fontWeight: 600, width: "100%" }}
                         >
                             <Typography
-                                variant="ostrich"
+                                variant="bebas"
                                 noWrap
                                 sx={{ fontSize: isMobile ? "1rem" : "1.3vw", overflow: "hidden", textOverflow: "ellipsis" }}
                             >

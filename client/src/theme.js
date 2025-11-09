@@ -44,6 +44,11 @@ const theme = createTheme({
             fontSize: '1rem',
             fontWeight: 400,
         },
+        bebas: {
+            fontFamily: '"Bebas-Regular", "Roboto", "Helvetica", "Arial", sans-serif',
+            fontSize: '1rem',
+            fontWeight: 400,
+        },
     },
     components: {
         MuiLink: {

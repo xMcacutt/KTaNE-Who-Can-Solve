@@ -12,6 +12,13 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'Bebas-Regular';
+    src: url('./assets/fonts/Bebas-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 .module-icon {
     width: 48px;
     height: 48px;

@@ -59,7 +59,7 @@ function ModuleCard({
                     <ModuleIcon iconFileName={encodedModuleName} size={72} />
                     <Box ml={5}>
                         <Link href={manualUrl}>
-                            <Typography variant="h6" fontSize="1.5rem">{module.name}</Typography>
+                            <Typography variant="bebas" fontSize="1.5rem">{module.name}</Typography>
                         </Link>
                         <Typography variant="body2">{module.description}</Typography>
                         <Box
