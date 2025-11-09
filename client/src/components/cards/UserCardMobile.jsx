@@ -68,12 +68,12 @@ function UserCard({
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar src={user.avatar} sx={{ width: 38, height: 38 }} />
                             <Box>
-                                <Typography variant="h6" fontSize="16">{truncate(user.name, 23)}</Typography>
+                                <Typography variant="bebas" fontSize="19">{truncate(user.name, 23)}</Typography>
                                 <Box display="flex" flexDirection="row" gap={2} alignItems="center">
-                                    <Typography variant="subtitle1" fontWeight="bold">
+                                    <Typography variant="subtitle1" fontWeight="bold" fontSize="13">
                                         Rank: #{user.rank}
                                     </Typography>
-                                    <Typography variant="body2" color="text.secondary">
+                                    <Typography variant="subtitle1" fontWeight="bold" fontSize="13" color="text.secondary">
                                         {renderScore()}
                                     </Typography>
                                 </Box>

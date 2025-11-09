@@ -89,7 +89,7 @@ function BombCard({
                         <Box ml={2}>
 
                             <Link component={RouterLink} to={missionPageUrl} underline="hover">
-                                <Typography variant="h6" noWrap sx={{ cursor: "pointer" }}>
+                                <Typography variant="bebas" fontSize="1.5rem" noWrap sx={{ cursor: "pointer" }}>
                                     {mission.mission_name}
                                 </Typography>
                             </Link>

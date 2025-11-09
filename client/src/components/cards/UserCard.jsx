@@ -67,7 +67,7 @@ function UserCard({
                         <Stack direction="row" spacing={2} alignItems="center">
                             <Avatar src={user.avatar} alt={user.name} sx={{ width: 48, height: 48 }} />
                             <Box>
-                                <Typography variant="h6">{user.name}</Typography>
+                                <Typography variant="bebas" fontSize="1.4rem">{user.name}</Typography>
                                 <Stack direction="row" spacing={4} mt={1}>
                                     {renderConfidences()}
                                 </Stack>

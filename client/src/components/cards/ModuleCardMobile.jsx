@@ -35,7 +35,7 @@ function ModuleCardMobile({
                             <Box display="flex" alignItems="center" gap={2}>
                                 <ModuleIcon iconFileName={encodedModuleName} size={64} />
                                 <Link href={manualUrl} underline="hover">
-                                    <Typography variant="h6">{module.name}</Typography>
+                                    <Typography variant="bebas" fontSize={24}>{module.name}</Typography>
                                 </Link>
                             </Box>
 
