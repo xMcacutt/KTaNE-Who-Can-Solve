@@ -1,6 +1,6 @@
 
-import { SitemapStream, streamToPromise } from 'sitemap';
-import { createWriteStream } from 'fs';
+const { SitemapStream, streamToPromise } = require('sitemap');
+const { createWriteStream } = require('fs');
 
 const BASE_URL = 'https://ktanewhocansolve.com';
 
