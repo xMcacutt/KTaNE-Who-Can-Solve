@@ -8,9 +8,7 @@ const staticRoutes = [
   '/',
   '/users',
   '/bombs',
-  '/practice',
-  '/missions/sample-mission', 
-  '/profile/sample-user',    
+  '/missions',    
 ];
 
 async function generateSitemap() {
