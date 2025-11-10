@@ -181,7 +181,7 @@ function BombCard({
                             }}
                         >
                             {userModuleStats.map((u) => (
-                                <Box key={u.id} textAlign="center">
+                                <Box key={u.id + u.isDefuser} textAlign="center">
                                     <Box
                                         sx={{
                                             position: "relative",

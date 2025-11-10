@@ -77,7 +77,7 @@ const fetchMissions = async (req) => {
     if (factoryConditions.length > 0) {
         conditions.push(`(${factoryConditions.join(' OR ')})`);
     } else {
-        conditions.push(`FALSE`);
+        conditions.push(`TRUE`);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -200,13 +200,11 @@ const fetchMissions = async (req) => {
 
     missions = missions.filter((mission) => {
         let passes = true;
-
         let bombs = [];
         try {
-            bombs = Array.isArray(mission.bombs)
-                ? mission.bombs
-                : JSON.parse(mission.bombs || "[]");
-        } catch {
+            bombs = Array.isArray(mission.bombs) ? mission.bombs : JSON.parse(mission.bombs || "[]");
+        } catch (e) {
+            console.log("JSON parse error for mission", mission.id, e);
             bombs = [];
         }
 
@@ -214,61 +212,55 @@ const fetchMissions = async (req) => {
             ...new Set(
                 bombs.flatMap((b) =>
                     b.pools?.flatMap((p) =>
-                        p.modules.map((m) =>
-                            typeof m === "string" ? m : m.module_id || m.id
-                        )
+                        p.modules.map((m) => typeof m === "string" ? m : m.module_id || m.id)
                     ) || []
                 )
             ),
         ];
-
         const possibleModuleCount = uniqueModules.length;
-        const moduleCount = bombs.reduce((total, bomb) => total + bomb.modules, 0);
+        const moduleCount = bombs.reduce((total, bomb) => total + (bomb.modules || 0), 0);
 
         if (filters.moduleCountRange) {
             const [minModules, maxModules] = filters.moduleCountRange;
             const minBound = 47;
             const maxBound = 200;
-
-            if (minModules > minBound && maxModules < maxBound) {
-                passes &&= moduleCount >= minModules && moduleCount <= maxModules;
-            } else if (minModules > minBound) {
-                passes &&= moduleCount >= minModules;
-            } else if (maxModules < maxBound) {
-                passes &&= moduleCount <= maxModules;
-            }
+            const pass = (minModules <= minBound || moduleCount >= minModules) &&
+                (maxModules >= maxBound || moduleCount <= maxModules);
+            if (!pass) console.log(`FAIL moduleCountRange on ${mission.id}: ${moduleCount}`);
+            passes &&= pass;
         }
 
         if (filters.possibleModuleCountRange) {
-            const [minModules, maxModules] = filters.possibleModuleCountRange;
-            const minBound = 47;
-            const maxBound = 300;
-
-            if (minModules > minBound && maxModules < maxBound) {
-                passes &&= possibleModuleCount >= minModules && possibleModuleCount <= maxModules;
-            } else if (minModules > minBound) {
-                passes &&= possibleModuleCount >= minModules;
-            } else if (maxModules < maxBound) {
-                passes &&= possibleModuleCount <= maxModules;
-            }
+            const [min, max] = filters.possibleModuleCountRange;
+            const pass = (min <= 47 || possibleModuleCount >= min) &&
+                (max >= 300 || possibleModuleCount <= max);
+            if (!pass) console.log(`FAIL possibleModuleCountRange on ${mission.id}: ${possibleModuleCount}`);
+            passes &&= pass;
         }
 
         if (filters.moduleSearch && filters.moduleSearch.trim() !== "") {
             const terms = filters.moduleSearch.toLowerCase().split(",").map(t => t.trim()).filter(Boolean);
             const joined = uniqueModules.join(" ").toLowerCase();
-            passes &&= terms.every(term => joined.includes(term));
+            const pass = terms.every(term => joined.includes(term));
+            if (!pass) console.log(`FAIL moduleSearch on ${mission.id}`);
+            passes &&= pass;
         }
 
-        if (filters.favesFilter === "only_faves") {
-            passes &&= mission.is_favourite === true;
-        } else if (filters.favesFilter === "no_faves") {
-            passes &&= mission.is_favourite === false;
+        if (discordId) {
+            if (filters.favesFilter === "only_faves") {
+                passes &&= !!mission.is_favourite;
+            } else if (filters.favesFilter === "no_faves") {
+                passes &&= !mission.is_favourite;
+            }
         }
 
         if (filters.knownPercentRange) {
+            const kp = mission.known_percentage ?? 0;
             const [min, max] = filters.knownPercentRange;
-            const p = (mission.known_percentage || 0) * 100;
-            passes &&= p >= min && p <= max;
+            const p = kp * 100;
+            const pass = p >= min && p <= max;
+            if (!pass) console.log(`FAIL knownPercentRange on ${mission.id}: ${p}% (known_percentage = ${kp})`);
+            passes &&= pass;
         }
 
         return passes;

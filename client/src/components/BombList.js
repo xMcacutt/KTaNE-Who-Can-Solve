@@ -60,7 +60,14 @@ export default function BombList() {
     const { activeUsers, setActiveUsers, addUser, removeUser, setDefuser } = useActiveUsers();
 
     const teamKey = useMemo(() => {
-        return activeUsers.map((u) => ({
+        if (activeUsers.length === 1) {
+            const solo = activeUsers[0];
+            return [
+                { id: solo.id, isDefuser: true },
+                { id: solo.id, isDefuser: false },
+            ];
+        }
+        return activeUsers.map(u => ({
             id: u.id,
             isDefuser: u.isDefuser,
         }));
