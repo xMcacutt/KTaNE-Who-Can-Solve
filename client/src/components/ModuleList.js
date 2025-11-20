@@ -29,6 +29,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 const searchFieldsOptions = ["name", "description", "author", "tags"];
 const difficultyOptions = ["Trivial", "VeryEasy", "Easy", "Medium", "Hard", "VeryHard", "Extreme"];
 const confidenceOptions = ["Unknown", "Attempted", "Confident", "Avoid"];
+const moduleTypeOptions = ["Regular", "Needy"];
 
 const fullConfidenceOptions = [
     ...confidenceOptions.map(opt => `Defuser:${opt}`),
@@ -100,6 +101,7 @@ export default function ModuleList() {
     const [searchFields, setSearchFields] = useState(savedFilters.searchFields || ["name", "description"]);
     const [confidenceFilter, setConfidenceFilter] = useState(savedFilters.confidenceFilter || fullConfidenceOptions);
     const [difficultyFilter, setDifficultyFilter] = useState(savedFilters.difficultyFilter || fullDifficultyOptions);
+    const [moduleTypeFilter, setModuleTypeFilter] = useState(savedFilters.moduleTypeFilter || moduleTypeOptions);
 
     useEffect(() => {
         const filters = {
@@ -108,9 +110,10 @@ export default function ModuleList() {
             searchFields,
             confidenceFilter,
             difficultyFilter,
+            moduleTypeFilter
         };
         localStorage.setItem("module_filters", JSON.stringify(filters));
-    }, [sortBy, sortOrder, searchFields, confidenceFilter, difficultyFilter]);
+    }, [sortBy, sortOrder, searchFields, confidenceFilter, difficultyFilter, moduleTypeFilter]);
 
     useEffect(() => {
         sessionStorage.setItem("module_search", searchTerm);
@@ -137,7 +140,7 @@ export default function ModuleList() {
         isLoading,
         error,
     } = useQuery({
-        queryKey: ["modules", debouncedSearchTerm, sortBy, sortOrder, searchFields, confidenceFilter, difficultyFilter],
+        queryKey: ["modules", debouncedSearchTerm, sortBy, sortOrder, searchFields, confidenceFilter, difficultyFilter, moduleTypeFilter],
         queryFn: async () => {
             const params = new URLSearchParams({
                 search: debouncedSearchTerm,
@@ -150,6 +153,8 @@ export default function ModuleList() {
             if (confidenceParam && confidenceParam !== 'All') params.append("confidenceFilter", confidenceParam);
             const difficultyParam = difficultyFilter.length === fullDifficultyOptions.length ? 'All' : difficultyFilter.join(',');
             if (difficultyParam && difficultyParam !== 'All') params.append("difficultyFilter", difficultyParam);
+            const typeParam = moduleTypeFilter.length === moduleTypeOptions.length ? "All" : moduleTypeFilter.join(",");
+            if (typeParam !== "All") params.append("moduleTypes", typeParam);
             const res = await fetch(
                 `/api/modules?${params.toString()}`
             );
@@ -321,6 +326,27 @@ export default function ModuleList() {
                     ))}
                 </Select>
             </FormControl>
+            <FormControl size="small">
+                <InputLabel>Module Types</InputLabel>
+                <Select
+                    label="Module Types"
+                    multiple
+                    value={moduleTypeFilter}
+                    onChange={(e) => setModuleTypeFilter(e.target.value)}
+                    input={<OutlinedInput label="Module Types" />}
+                    renderValue={(selected) => selected.join(", ")}
+                    sx={{
+                        width: (theme) => theme.typography.fontSize * 11,
+                    }}
+                >
+                    {moduleTypeOptions.map((type) => (
+                        <MenuItem key={type} value={type}>
+                            <Checkbox checked={moduleTypeFilter.includes(type)} />
+                            <ListItemText primary={type} />
+                        </MenuItem>
+                    ))}
+                </Select>
+            </FormControl>
             {authUser && (
 
                 <FormControl size="small">
@@ -471,6 +497,7 @@ export default function ModuleList() {
                                             score={scores[module.module_id]}
                                             setScores={setScores}
                                             refetchScores={refetchScores}
+                                            popularity={sortBy === 'popularity' ? module.popularity : null}
                                         />
                                     }
                                 </div>

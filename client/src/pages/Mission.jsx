@@ -68,7 +68,7 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
                     >
                         <MenuItem value="Show All">Show All</MenuItem>
                         <MenuItem value="Only My Confident">Only My Confident</MenuItem>
-                        <MenuItem value="Only Unknown">Only Unknown</MenuItem>
+                        <MenuItem value="Only My Unknown">Only My Unknown</MenuItem>
                     </Select>
                 </FormControl>
                 {

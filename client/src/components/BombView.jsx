@@ -79,12 +79,25 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
                                 score.expert_confidence === "Confident"
                             );
                         }
+                        if (filter === "Only My Unknown") {
+                            if (!authUser) return false;
+                            const currentUser = users.find(
+                                (u) =>
+                                    u.id === authUser.id ||
+                                    u._id === authUser.id ||
+                                    u.user_id === authUser.id
+                            );
+                            if (!currentUser || !Array.isArray(currentUser.scores)) return false;
 
-                        if (filter === "Only Unknown") {
-                            const anyExpertConfident = expertConfs.includes("Confident");
-                            return !anyExpertConfident && defuserConf !== "Confident";
+                            const score = currentUser.scores.find(
+                                (s) => s.module_id === moduleData.module_id
+                            );
+
+                            if (!score) return false;
+
+                            if (users.isDefuser) return score.defuser_confidence !== "Confident";
+                            else return score.expert_confidence !== "Confident";
                         }
-
                         return true;
                     })
                     .map(({ moduleId, probability }, subIdx) => {
@@ -118,7 +131,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
                                 : "0.5vh dotted transparent",
                             borderRadius: 3,
                             px: 1,
-                            py: (optionsCount > 1 || pulledCount > 1)  ? 1 : 0,
+                            py: (optionsCount > 1 || pulledCount > 1) ? 1 : 0,
                             my: (optionsCount > 1 || pulledCount > 1) ? 3 : 0.5,
                             "::before": (optionsCount > 1 || pulledCount > 1)
                                 ? {

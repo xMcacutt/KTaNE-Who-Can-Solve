@@ -15,11 +15,21 @@ router.get("/", async (req, res) => {
         const userId = req.query.userId || null;
         const confidenceFilter = userId ? req.query.confidenceFilter : null;
         const difficultyFilter = req.query.difficultyFilter || null;
+        const moduleTypeFilter = req.query.moduleTypes || null;
         let conditions = [];
         let params = [];
         let paramIndex = 1;
         params.push(userId);
         paramIndex++;
+        if (moduleTypeFilter && moduleTypeFilter !== "All") {
+            const typeFilters = moduleTypeFilter.split(",").map(t => t.trim()).filter(Boolean);
+
+            const placeholders = typeFilters.map((_, i) => `$${paramIndex + i}`).join(",");
+            conditions.push(`modules.type IN (${placeholders})`);
+
+            typeFilters.forEach(t => params.push(t));
+            paramIndex += typeFilters.length;
+        }
         if (search) {
             let searchConditions = [];
             if (searchFields.includes("name")) {
@@ -105,7 +115,7 @@ router.get("/", async (req, res) => {
                         LOWER(modules.name) ASC
                 `;
                 break;
-                
+
             case "difficulty":
                 orderClause = `
                     ORDER BY
@@ -132,11 +142,7 @@ router.get("/", async (req, res) => {
             case "popularity":
                 orderClause = `
                     ORDER BY
-                        (
-                            SELECT COUNT(*) FROM user_module_scores ps
-                            WHERE ps.module_id = modules.module_id
-                            AND (ps.defuser_confidence = 'Confident' OR ps.expert_confidence = 'Confident')
-                        ) ${sortOrder},
+                        pop.count ${sortOrder},
                         LOWER(modules.name) ASC
                 `;
                 break;
@@ -154,9 +160,20 @@ router.get("/", async (req, res) => {
         }
         const query = `
             SELECT modules.*,
+                (pop.count::float / NULLIF(u.total, 0)) * 100 AS popularity,
                 COALESCE(s.defuser_confidence, 'Unknown') AS user_defuser_confidence,
                 COALESCE(s.expert_confidence, 'Unknown') AS user_expert_confidence
             FROM modules
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS count
+                FROM user_module_scores ps
+                WHERE ps.module_id = modules.module_id
+                AND (ps.defuser_confidence = 'Confident' OR ps.expert_confidence = 'Confident')
+            ) pop ON TRUE
+            LEFT JOIN LATERAL (
+                SELECT COUNT(*) AS total
+                FROM users
+            ) u ON TRUE
             LEFT JOIN user_module_scores s
                 ON s.module_id = modules.module_id
                 AND s.user_id = $${1}

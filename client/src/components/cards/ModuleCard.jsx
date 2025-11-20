@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 import { bossToColor, confidenceIcons, confidenceOptions } from "../../utility";
-import { Card, CardContent, Typography, Box, Tooltip, Select, MenuItem, FormControl, InputLabel, Link, Chip, Grid, Checkbox, FormControlLabel } from "@mui/material";
+import { Card, CardContent, Typography, Box, Tooltip, Stack, Select, MenuItem, FormControl, InputLabel, Link, Chip, Grid, Checkbox, FormControlLabel } from "@mui/material";
 import useModuleCard from "../../hooks/useModuleCard";
 import ModuleIcon from "../small/ModuleIcon";
 import { ReactComponent as BossIcon } from '../../assets/Boss.svg';
@@ -16,6 +16,7 @@ function ModuleCard({
     score,
     setScores,
     refetchScores,
+    popularity
 }) {
     const encodedModuleName = encodeURIComponent(module.icon_file_name);
     const { handleScoreChange } = useModuleCard({ module, user, authUser, score, setScores, refetchScores });
@@ -58,9 +59,14 @@ function ModuleCard({
                 }}>
                     <ModuleIcon iconFileName={encodedModuleName} size={72} />
                     <Box ml={5}>
-                        <Link href={manualUrl}>
-                            <Typography variant="bebas" fontSize="1.5rem">{module.name}</Typography>
-                        </Link>
+                        <Stack>
+                            <Link href={manualUrl}>
+                                <Typography variant="bebas" fontSize="1.5rem">{module.name}</Typography>
+                            </Link>
+                            {popularity !== null && (
+                                <Typography size="small" sx={{ pt: 0.35 }}>known by {popularity}% of users</Typography>
+                            )}
+                        </Stack>
                         <Typography variant="body2">{module.description}</Typography>
                         <Box
                             id="chips"

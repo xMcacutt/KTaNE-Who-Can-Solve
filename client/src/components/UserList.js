@@ -40,15 +40,17 @@ export default function UserList() {
     }
     const [sortType, setSortType] = useState(savedFilters.sort || "combined");
     const [searchTerm, setSearchTerm] = useState(() => sessionStorage.getItem("user_search") || "");
-
-    useEffect(() => {
-        const filters = { sortType };
-        localStorage.setItem("user_filters", JSON.stringify(filters));
-    }, [sortType]);
+    const [confidenceView, setConfidenceView] = useState(
+        savedFilters.confidenceView || "combined"
+    );
 
     useEffect(() => {
         sessionStorage.setItem("user_search", searchTerm);
     }, [searchTerm]);
+    useEffect(() => {
+        const filters = { sortType, confidenceView };
+        localStorage.setItem("user_filters", JSON.stringify(filters));
+    }, [sortType, confidenceView]);
 
     const debouncedSearchTerm = useDebounce(searchTerm, 100);
 
@@ -110,6 +112,19 @@ export default function UserList() {
                             <MenuItem value="solo">Solo</MenuItem>
                         </Select>
                     </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 160 }}>
+                        <InputLabel>Confidence View</InputLabel>
+                        <Select
+                            value={confidenceView}
+                            label="Confidence View"
+                            onChange={(e) => setConfidenceView(e.target.value)}
+                        >
+                            <MenuItem value="combined">Combined</MenuItem>
+                            <MenuItem value="regular">Regular Only</MenuItem>
+                            <MenuItem value="needy">Needy Only</MenuItem>
+                            <MenuItem value="split">Split View</MenuItem>
+                        </Select>
+                    </FormControl>
                 </Stack>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
@@ -143,6 +158,7 @@ export default function UserList() {
                                             user={user}
                                             index={index}
                                             sortType={sortType}
+                                            confidenceView={confidenceView}
                                         />
                                     }
                                     {
@@ -152,6 +168,7 @@ export default function UserList() {
                                             user={user}
                                             index={index}
                                             sortType={sortType}
+                                            confidenceView={confidenceView}
                                         />
                                     }
                                 </div>
