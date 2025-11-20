@@ -160,7 +160,7 @@ router.get("/", async (req, res) => {
         }
         const query = `
             SELECT modules.*,
-                (pop.count::float / NULLIF(u.total, 0)) * 100 AS popularity,
+                ROUND((pop.count::float / NULLIF(u.total, 0)) * 100) AS popularity,
                 COALESCE(s.defuser_confidence, 'Unknown') AS user_defuser_confidence,
                 COALESCE(s.expert_confidence, 'Unknown') AS user_expert_confidence
             FROM modules
