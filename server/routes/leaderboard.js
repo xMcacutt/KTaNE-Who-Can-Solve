@@ -167,8 +167,8 @@ router.get("/", async (req, res) => {
                 regular_expert_avoid: +row.regular_expert_avoid,
                 needy_expert_avoid: +row.needy_expert_avoid,
 
-                regular_solo_count: row.regular_solo_count,
-                needy_solo_count: row.needy_solo_count,
+                regular_solo_count: +row.regular_solo_count,
+                needy_solo_count: +row.needy_solo_count,
 
                 defuser_score: row.defuser_score,
                 expert_score: row.expert_score,
