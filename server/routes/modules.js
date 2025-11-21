@@ -49,27 +49,61 @@ router.get("/", async (req, res) => {
         }
 
         if (search !== "") {
-            const sub = [];
+            const terms = search
+                .trim()
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(Boolean);
 
-            if (searchFields.includes("name")) {
-                sub.push(`m.name ILIKE '%' || $${idx} || '%'`);
-                sub.push(`m.periodic_table_element ILIKE '%' || $${idx} || '%'`);
-            }
-            if (searchFields.includes("description")) {
-                sub.push(`m.description ILIKE '%' || $${idx} || '%'`);
-            }
-            if (searchFields.includes("author")) {
-                sub.push(`$${idx} = ANY(m.developers)`);
-            }
-            if (searchFields.includes("tags")) {
-                sub.push(`$${idx} = ANY(m.tags)`);
-            }
+            if (terms.length > 0) {
+                const termGroups = [];
 
-            params.push(search);
-            idx++;
+                for (const term of terms) {
+                    const perTermConds = [];
 
-            if (sub.length > 0) {
-                conditions.push(`(${sub.join(" OR ")})`);
+                    if (searchFields.includes("name")) {
+                        perTermConds.push(`LOWER(m.name) LIKE '%' || $${idx} || '%'`);
+                        params.push(term);
+                        idx++;
+
+                        perTermConds.push(`LOWER(m.periodic_table_element) LIKE '%' || $${idx} || '%'`);
+                        params.push(term);
+                        idx++;
+                    }
+                    if (searchFields.includes("description")) {
+                        perTermConds.push(`LOWER(m.description) LIKE '%' || $${idx} || '%'`);
+                        params.push(term);
+                        idx++;
+                    }
+                    if (searchFields.includes("author")) {
+                        perTermConds.push(`
+                        EXISTS(
+                                SELECT 1 FROM unnest(m.developers) dev
+                            WHERE LOWER(dev) LIKE '%' || $${idx} || '%'
+                            )
+                                    `);
+                        params.push(term);
+                        idx++;
+                    }
+                    if (searchFields.includes("tags")) {
+                        perTermConds.push(`
+                        EXISTS(
+                                        SELECT 1 FROM unnest(m.tags) tag
+                            WHERE LOWER(tag) LIKE '%' || $${idx} || '%'
+                                    )
+                                    `);
+                        params.push(term);
+                        idx++;
+                    }
+
+                    if (perTermConds.length > 0) {
+                        termGroups.push(`(${perTermConds.join(" OR ")})`);
+                    }
+                }
+
+                if (termGroups.length > 0) {
+                    conditions.push(`(${termGroups.join(" AND ")})`);
+                }
             }
         }
 
@@ -91,18 +125,18 @@ router.get("/", async (req, res) => {
 
             if (defuserDiffs.length > 0 && defuserDiffs.length < difficultyOptions.length) {
                 const placeholders = defuserDiffs
-                    .map((_, i) => `$${idx + i}`)
+                    .map((_, i) => `$${idx + i} `)
                     .join(",");
-                diffConditions.push(`m.defuser_difficulty IN (${placeholders})`);
+                diffConditions.push(`m.defuser_difficulty IN(${placeholders})`);
                 defuserDiffs.forEach(d => params.push(d));
                 idx += defuserDiffs.length;
             }
 
             if (expertDiffs.length > 0 && expertDiffs.length < difficultyOptions.length) {
                 const placeholders = expertDiffs
-                    .map((_, i) => `$${idx + i}`)
+                    .map((_, i) => `$${idx + i} `)
                     .join(",");
-                diffConditions.push(`m.expert_difficulty IN (${placeholders})`);
+                diffConditions.push(`m.expert_difficulty IN(${placeholders})`);
                 expertDiffs.forEach(d => params.push(d));
                 idx += expertDiffs.length;
             }
@@ -117,60 +151,60 @@ router.get("/", async (req, res) => {
             params.push(confidenceFilter);
 
             conditions.push(`
-                EXISTS (
-                    SELECT 1 FROM user_module_scores us
+                    EXISTS(
+                        SELECT 1 FROM user_module_scores us
                     WHERE us.user_id = $${idx - 1}
                     AND us.module_id = m.module_id
-                    AND (
-                        us.defuser_confidence = ANY($${idx}::text[])
-                        OR us.expert_confidence = ANY($${idx}::text[])
-                    )
+                AND(
+                    us.defuser_confidence = ANY($${idx}:: text[])
+                        OR us.expert_confidence = ANY($${idx}:: text[])
+                )
                 )
             `);
 
             idx++;
         }
 
-        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+        const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")} ` : "";
 
         const query = `
-            WITH popularity AS (
-                SELECT
+            WITH popularity AS(
+                    SELECT
                     module_id,
-                    COUNT(*) FILTER (
+                    COUNT(*) FILTER(
                         WHERE defuser_confidence = 'Confident'
                            OR expert_confidence = 'Confident'
                     ) AS popularity
                 FROM user_module_scores
                 GROUP BY module_id
-            ),
+                ),
 
-            difficulty_calc AS (
-                SELECT
+    difficulty_calc AS(
+        SELECT
                     module_id,
-                    (
-                        COALESCE(
-                            array_position(
-                                ARRAY['Trivial','VeryEasy','Easy','Medium','Hard','VeryHard','Extreme'],
-                                defuser_difficulty
-                            ),
-                            999
-                        ) +
-                        COALESCE(
-                            array_position(
-                                ARRAY['Trivial','VeryEasy','Easy','Medium','Hard','VeryHard','Extreme'],
-                                expert_difficulty
-                            ),
-                            999
-                        )
-                    ) AS difficulty_score
-                FROM modules
+        (
+            COALESCE(
+                array_position(
+                    ARRAY['Trivial', 'VeryEasy', 'Easy', 'Medium', 'Hard', 'VeryHard', 'Extreme'],
+                    defuser_difficulty
+                ),
+                999
+            ) +
+            COALESCE(
+                array_position(
+                    ARRAY['Trivial', 'VeryEasy', 'Easy', 'Medium', 'Hard', 'VeryHard', 'Extreme'],
+                    expert_difficulty
+                ),
+                999
             )
+        ) AS difficulty_score
+                FROM modules
+    )
 
-            SELECT
-                m.*,
-                COALESCE(p.popularity, 0) AS popularity,
-                d.difficulty_score
+SELECT
+m.*,
+    COALESCE(p.popularity, 0) AS popularity,
+        d.difficulty_score
             FROM modules m
             LEFT JOIN popularity p ON p.module_id = m.module_id
             LEFT JOIN difficulty_calc d ON d.module_id = m.module_id
@@ -178,7 +212,7 @@ router.get("/", async (req, res) => {
             ORDER BY ${sortBy} ${sortOrder}, m.name ASC
             LIMIT ${limit}
             OFFSET ${offset}
-        `;
+`;
 
         const result = await pool.query(query, params);
         res.json(result.rows);
