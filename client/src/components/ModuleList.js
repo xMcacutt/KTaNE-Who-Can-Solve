@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { Virtuoso } from 'react-virtuoso';
 import ModuleCard from "./cards/ModuleCard";
 import ModuleCardMobile from "./cards/ModuleCardMobile";
@@ -136,34 +136,62 @@ export default function ModuleList() {
     };
 
     const {
-        data: modules = [],
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
         isLoading,
-        error,
-    } = useQuery({
-        queryKey: ["modules", debouncedSearchTerm, sortBy, sortOrder, searchFields, confidenceFilter, difficultyFilter, moduleTypeFilter],
-        queryFn: async () => {
+        error
+    } = useInfiniteQuery({
+        queryKey: [
+            "modules",
+            debouncedSearchTerm,
+            sortBy,
+            sortOrder,
+            searchFields,
+            confidenceFilter,
+            difficultyFilter,
+            moduleTypeFilter
+        ],
+        queryFn: async ({ pageParam = 0 }) => {
             const params = new URLSearchParams({
                 search: debouncedSearchTerm,
                 sortBy,
                 sortOrder,
                 searchFields: searchFields.join(","),
+                limit: "50",
+                offset: pageParam.toString(),
             });
+
             if (authUser) params.append("userId", authUser.id);
-            const confidenceParam = confidenceFilter.length === fullConfidenceOptions.length ? 'All' : confidenceFilter.join(',');
-            if (confidenceParam && confidenceParam !== 'All') params.append("confidenceFilter", confidenceParam);
-            const difficultyParam = difficultyFilter.length === fullDifficultyOptions.length ? 'All' : difficultyFilter.join(',');
-            if (difficultyParam && difficultyParam !== 'All') params.append("difficultyFilter", difficultyParam);
+
+            const confidenceParam =
+                confidenceFilter.length === fullConfidenceOptions.length ? "All" : confidenceFilter.join(",");
+            if (confidenceParam !== "All") params.append("confidenceFilter", confidenceParam);
+
+            const difficultyParam =
+                difficultyFilter.length === fullDifficultyOptions.length ? "All" : difficultyFilter.join(",");
+            if (difficultyParam !== "All") params.append("difficultyFilter", difficultyParam);
+
             const typeParam = moduleTypeFilter.length === moduleTypeOptions.length ? "All" : moduleTypeFilter.join(",");
             if (typeParam !== "All") params.append("moduleTypes", typeParam);
-            const res = await fetch(
-                `/api/modules?${params.toString()}`
-            );
+
+            const res = await fetch(`/api/modules?${params.toString()}`);
             if (!res.ok) throw new Error("Failed to fetch modules");
-            return res.json();
+
+            const rows = await res.json();
+
+            return {
+                items: rows,
+                nextOffset: rows.length < 50 ? null : pageParam + 50
+            };
         },
+        getNextPageParam: (lastPage) => lastPage.nextOffset,
         keepPreviousData: true,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 5
     });
+
+    const modules = data ? data.pages.flatMap(page => page.items) : [];
 
     const renderMultiSelectValue = (selected, totalOptions, label) => {
         if (selected.length === 0) return `No ${label}`;
@@ -466,45 +494,43 @@ export default function ModuleList() {
                 )}
                 {!isLoading && !error && modules.length > 0 ? (
                     <Virtuoso
-                        style={{
-                            height: "97%",
-                            width: "100%",
-                        }}
+                        style={{ height: "97%", width: "100%" }}
+                        data={modules}
                         totalCount={modules.length}
-                        itemContent={(index) => {
-                            const module = modules[index];
-                            return (
-                                <div style={{ paddingBottom: 16 }}>
-                                    {
-                                        isMobile &&
-                                        <ModuleCardMobile
-                                            module={module}
-                                            index={index}
-                                            user={authUser}
-                                            authUser={authUser}
-                                            score={scores[module.module_id]}
-                                            setScores={setScores}
-                                            refetchScores={refetchScores}
-                                        />
-                                    }
-                                    {
-                                        !isMobile &&
-                                        <ModuleCard
-                                            module={module}
-                                            index={index}
-                                            user={authUser}
-                                            authUser={authUser}
-                                            score={scores[module.module_id]}
-                                            setScores={setScores}
-                                            refetchScores={refetchScores}
-                                            popularity={sortBy === 'popularity' ? module.popularity : null}
-                                        />
-                                    }
-                                </div>
-                            );
-                        }}
-                        computeItemKey={(index) => modules[index]?.id}
                         increaseViewportBy={200}
+                        computeItemKey={(index) => modules[index]?.module_id} 
+                        itemContent={(index, module) => (
+                            <div style={{ paddingBottom: 16 }}>
+                                {isMobile ? (
+                                    <ModuleCardMobile
+                                        module={module}
+                                        index={index}
+                                        user={authUser}
+                                        authUser={authUser}
+                                        score={scores[module.module_id]}
+                                        setScores={setScores}
+                                        refetchScores={refetchScores}
+                                    />
+                                ) : (
+                                    <ModuleCard
+                                        module={module}
+                                        index={index}
+                                        user={authUser}
+                                        authUser={authUser}
+                                        score={scores[module.module_id]}
+                                        setScores={setScores}
+                                        refetchScores={refetchScores}
+                                        popularity={sortBy === "popularity" ? module.popularity : null}
+                                    />
+                                )}
+                            </div>
+                        )}
+                        endReached={() => {
+                            if (hasNextPage && !isFetchingNextPage) {
+                                console.log("Loading next page…");
+                                fetchNextPage();
+                            }
+                        }}
                     />
                 ) : (
                     !isLoading &&
