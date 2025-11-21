@@ -91,7 +91,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
                                 (s) => s.module_id === moduleData.module_id
                             );
 
-                            if (!score) return false;
+                            if (!score) return true;
 
                             if (users.isDefuser) return score.defuser_confidence !== "Confident";
                             else return score.expert_confidence !== "Confident";
