@@ -74,10 +74,8 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
 
                             if (!score) return false;
 
-                            return (
-                                score.defuser_confidence === "Confident" ||
-                                score.expert_confidence === "Confident"
-                            );
+                            if (users.isDefuser) return score.defuser_confidence === "Confident";
+                            else return score.expert_confidence === "Confident";
                         }
                         if (filter === "Only My Unknown") {
                             if (!authUser) return false;
