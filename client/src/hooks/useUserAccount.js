@@ -18,6 +18,7 @@ function normalizeScores(input) {
   return input;
 }
 
+
 export function useUserAccount(profileId) {
   const [localScores, setLocalScores] = useState({});
 
@@ -50,9 +51,9 @@ export function useUserAccount(profileId) {
   });
 
   const { data: modules = [], isLoading: modulesLoading } = useQuery({
-    queryKey: ["modules"],
+    queryKey: ["modules", "all"],
     queryFn: async () => {
-      const res = await fetch(`/api/modules`, { credentials: "include" });
+      const res = await fetch(`/api/modules/all`);
       if (!res.ok) throw new Error("Failed to fetch modules");
       return res.json();
     },

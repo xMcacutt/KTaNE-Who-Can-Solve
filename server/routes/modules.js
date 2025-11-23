@@ -13,6 +13,21 @@ const SORT_FIELDS = {
     difficulty: "difficulty_score"
 };
 
+router.get("/all", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT *
+            FROM modules
+            ORDER BY name ASC
+        `);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching all modules:", err);
+        res.status(500).send("Server error");
+    }
+});
+
 router.get("/", async (req, res) => {
     try {
         const limit = Math.min(parseInt(req.query.limit) || 50, 200);
@@ -27,11 +42,7 @@ router.get("/", async (req, res) => {
                 : [];
 
         const difficultyFilterRaw = req.query.difficultyFilter || null;
-
-        const confidenceFilter =
-            req.query.confidenceFilter && req.query.confidenceFilter !== "All"
-                ? req.query.confidenceFilter.split(",").map(s => s.trim())
-                : [];
+        const confidenceFilterRaw = req.query.confidenceFilter || null;
 
         const userId = req.query.userId || null;
 
@@ -146,23 +157,65 @@ router.get("/", async (req, res) => {
             }
         }
 
-        if (userId && confidenceFilter.length > 0) {
-            params.push(userId);
-            params.push(confidenceFilter);
+        if (userId && confidenceFilterRaw && confidenceFilterRaw !== "All") {
+            const confFilters = confidenceFilterRaw
+                .split(",")
+                .map(f => f.trim())
+                .filter(Boolean);
 
+            const defuserConfs = confFilters
+                .filter(f => f.startsWith("Defuser:"))
+                .map(f => f.slice("Defuser:".length));
+
+            const expertConfs = confFilters
+                .filter(f => f.startsWith("Expert:"))
+                .map(f => f.slice("Expert:".length));
+
+            const confConditions = [];
+
+            params.push(userId);
+            const userIdx = idx++;
             conditions.push(`
-                    EXISTS(
-                        SELECT 1 FROM user_module_scores us
-                    WHERE us.user_id = $${idx - 1}
-                    AND us.module_id = m.module_id
-                AND(
-                    us.defuser_confidence = ANY($${idx}:: text[])
-                        OR us.expert_confidence = ANY($${idx}:: text[])
-                )
-                )
+                true
             `);
 
-            idx++;
+            if (defuserConfs.length > 0 && defuserConfs.length < confidenceOptions.length) {
+                params.push(defuserConfs);
+                const dIdx = idx++;
+                confConditions.push(`
+                    COALESCE(
+                        (
+                            SELECT us.defuser_confidence
+                            FROM user_module_scores us
+                            WHERE us.user_id = $${userIdx}
+                            AND us.module_id = m.module_id
+                            LIMIT 1
+                        ),
+                        'Unknown'
+                    ) = ANY($${dIdx}::text[])
+                `);
+            }
+
+            if (expertConfs.length > 0 && expertConfs.length < confidenceOptions.length) {
+                params.push(expertConfs);
+                const eIdx = idx++;
+                confConditions.push(`
+                    COALESCE(
+                        (
+                            SELECT us.expert_confidence
+                            FROM user_module_scores us
+                            WHERE us.user_id = $${userIdx}
+                            AND us.module_id = m.module_id
+                            LIMIT 1
+                        ),
+                        'Unknown'
+                    ) = ANY($${eIdx}::text[])
+                `);
+            }
+
+            if (confConditions.length > 0) {
+                conditions.push(`(${confConditions.join(" AND ")})`);
+            }
         }
 
         const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")} ` : "";
@@ -179,40 +232,40 @@ router.get("/", async (req, res) => {
                 GROUP BY module_id
                 ),
 
-    difficulty_calc AS(
-        SELECT
-                    module_id,
-        (
-            COALESCE(
-                array_position(
-                    ARRAY['Trivial', 'VeryEasy', 'Easy', 'Medium', 'Hard', 'VeryHard', 'Extreme'],
-                    defuser_difficulty
-                ),
-                999
-            ) +
-            COALESCE(
-                array_position(
-                    ARRAY['Trivial', 'VeryEasy', 'Easy', 'Medium', 'Hard', 'VeryHard', 'Extreme'],
-                    expert_difficulty
-                ),
-                999
+            difficulty_calc AS(
+                SELECT
+                            module_id,
+                (
+                    COALESCE(
+                        array_position(
+                            ARRAY['Trivial', 'VeryEasy', 'Easy', 'Medium', 'Hard', 'VeryHard', 'Extreme'],
+                            defuser_difficulty
+                        ),
+                        999
+                    ) +
+                    COALESCE(
+                        array_position(
+                            ARRAY['Trivial', 'VeryEasy', 'Easy', 'Medium', 'Hard', 'VeryHard', 'Extreme'],
+                            expert_difficulty
+                        ),
+                        999
+                    )
+                ) AS difficulty_score
+                        FROM modules
             )
-        ) AS difficulty_score
-                FROM modules
-    )
 
-SELECT
-m.*,
-    COALESCE(p.popularity, 0) AS popularity,
-        d.difficulty_score
-            FROM modules m
-            LEFT JOIN popularity p ON p.module_id = m.module_id
-            LEFT JOIN difficulty_calc d ON d.module_id = m.module_id
-            ${whereClause}
-            ORDER BY ${sortBy} ${sortOrder}, m.name ASC
-            LIMIT ${limit}
-            OFFSET ${offset}
-`;
+            SELECT
+            m.*,
+                COALESCE(p.popularity, 0) AS popularity,
+                    d.difficulty_score
+                        FROM modules m
+                        LEFT JOIN popularity p ON p.module_id = m.module_id
+                        LEFT JOIN difficulty_calc d ON d.module_id = m.module_id
+                        ${whereClause}
+                        ORDER BY ${sortBy} ${sortOrder}, m.name ASC
+                        LIMIT ${limit}
+                        OFFSET ${offset}
+            `;
 
         const result = await pool.query(query, params);
         res.json(result.rows);
