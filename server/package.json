@@ -19,6 +19,7 @@
         "express-session": "^1.18.1",
         "express-useragent": "^1.0.15",
         "multer": "^2.0.2",
+        "node-cron": "^4.2.1",
         "node-fetch": "^3.3.2",
         "passport": "^0.7.0",
         "passport-discord": "^0.1.4",

@@ -16,6 +16,7 @@ import dotenv from "dotenv";
 import path from "path";
 
 dotenv.config({ path: path.resolve('.env') });
+import { runBackup } from "./backup.js";
 
 const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:3000'];
 const app = express();
@@ -54,4 +55,5 @@ app.listen(PORT, () => {
     refreshModules();
     refreshBombs();
     setInterval(refreshModules, 1800000);
+    runBackup();
 });
