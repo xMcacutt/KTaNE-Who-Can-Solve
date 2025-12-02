@@ -15,6 +15,7 @@ const Bombs = lazy(() => import("./pages/Bombs.jsx"));
 const Practice = lazy(() => import("./pages/Practice.jsx"));
 const Mission = lazy(() => import("./pages/Mission.jsx"));
 
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: { retry: 1, staleTime: 5 * 60 * 1000 },

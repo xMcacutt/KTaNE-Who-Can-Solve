@@ -52,15 +52,16 @@ export function useDebounce(value, delay) {
     return debouncedValue;
 }
 
-export default function ModuleList() {
+export default function ModuleList({ scoresOverride, userOverride }) {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-    const { authUser, logout } = useAuth();
-    const [scores, setScores] = useState({});
+    const { authUser } = useAuth();
+    const activeUser = userOverride || authUser;
+    const [scores, setScores] = useState(scoresOverride || {});
 
     const { data: userScores, refetch: refetchScores } = useQuery({
-        queryKey: ['scores', authUser?.id],
+        queryKey: ['scores', activeUser?.id],
         queryFn: async () => {
             const res = await fetch(`/api/scores`, {
                 credentials: 'include',
@@ -79,12 +80,12 @@ export default function ModuleList() {
                 {}
             );
         },
-        enabled: !!authUser,
+        enabled: !!activeUser,
         staleTime: 1000 * 60 * 5,
     });
 
     useEffect(() => {
-        if (userScores) setScores(userScores);
+        if (!scoresOverride && userScores) setScores(userScores);
     }, [userScores]);
 
     let savedFilters = {};
@@ -163,7 +164,7 @@ export default function ModuleList() {
                 offset: pageParam.toString(),
             });
 
-            if (authUser) params.append("userId", authUser.id);
+            if (activeUser) params.append("userId", activeUser.id);
 
             const confidenceParam =
                 confidenceFilter.length === fullConfidenceOptions.length ? "All" : confidenceFilter.join(",");
@@ -375,7 +376,7 @@ export default function ModuleList() {
                     ))}
                 </Select>
             </FormControl>
-            {authUser && (
+            {activeUser && (
 
                 <FormControl size="small">
                     <InputLabel>Confidence</InputLabel>
@@ -498,27 +499,27 @@ export default function ModuleList() {
                         data={modules}
                         totalCount={modules.length}
                         increaseViewportBy={200}
-                        computeItemKey={(index) => modules[index]?.module_id} 
+                        computeItemKey={(index) => modules[index]?.module_id}
                         itemContent={(index, module) => (
                             <div style={{ paddingBottom: 16 }}>
                                 {isMobile ? (
                                     <ModuleCardMobile
                                         module={module}
                                         index={index}
-                                        user={authUser}
+                                        user={activeUser}
                                         authUser={authUser}
                                         score={scores[module.module_id]}
-                                        setScores={setScores}
+                                        setScores={scoresOverride ? undefined : setScores}
                                         refetchScores={refetchScores}
                                     />
                                 ) : (
                                     <ModuleCard
                                         module={module}
                                         index={index}
-                                        user={authUser}
+                                        user={activeUser}
                                         authUser={authUser}
                                         score={scores[module.module_id]}
-                                        setScores={setScores}
+                                        setScores={scoresOverride ? undefined : setScores}
                                         refetchScores={refetchScores}
                                         popularity={sortBy === "popularity" ? module.popularity : null}
                                     />
