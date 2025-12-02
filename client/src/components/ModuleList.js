@@ -80,13 +80,17 @@ export default function ModuleList({ scoresOverride, userOverride }) {
                 {}
             );
         },
-        enabled: !!activeUser,
+        enabled: !!activeUser && authUser?.id === activeUser.id,
         staleTime: 1000 * 60 * 5,
     });
 
     useEffect(() => {
-        if (!scoresOverride && userScores) setScores(userScores);
-    }, [userScores]);
+        if (scoresOverride) {
+            setScores(scoresOverride);
+        } else if (userScores) {
+            setScores(userScores);
+        }
+    }, [scoresOverride, userScores]);
 
     let savedFilters = {};
     try {
@@ -146,6 +150,7 @@ export default function ModuleList({ scoresOverride, userOverride }) {
     } = useInfiniteQuery({
         queryKey: [
             "modules",
+            activeUser?.id || null,
             debouncedSearchTerm,
             sortBy,
             sortOrder,
@@ -509,7 +514,7 @@ export default function ModuleList({ scoresOverride, userOverride }) {
                                         user={activeUser}
                                         authUser={authUser}
                                         score={scores[module.module_id]}
-                                        setScores={scoresOverride ? undefined : setScores}
+                                        setScores={setScores}
                                         refetchScores={refetchScores}
                                     />
                                 ) : (
@@ -519,7 +524,7 @@ export default function ModuleList({ scoresOverride, userOverride }) {
                                         user={activeUser}
                                         authUser={authUser}
                                         score={scores[module.module_id]}
-                                        setScores={scoresOverride ? undefined : setScores}
+                                        setScores={setScores}
                                         refetchScores={refetchScores}
                                         popularity={sortBy === "popularity" ? module.popularity : null}
                                     />
@@ -528,7 +533,6 @@ export default function ModuleList({ scoresOverride, userOverride }) {
                         )}
                         endReached={() => {
                             if (hasNextPage && !isFetchingNextPage) {
-                                console.log("Loading next page…");
                                 fetchNextPage();
                             }
                         }}

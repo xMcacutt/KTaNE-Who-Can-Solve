@@ -47,6 +47,7 @@ export default function UserList() {
     useEffect(() => {
         sessionStorage.setItem("user_search", searchTerm);
     }, [searchTerm]);
+    
     useEffect(() => {
         const filters = { sortType, confidenceView };
         localStorage.setItem("user_filters", JSON.stringify(filters));

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import ModuleList from "../components/ModuleList";
@@ -9,34 +9,14 @@ import {
     Box,
     Typography,
     Button,
-    Select,
-    MenuItem,
-    FormControl,
-    InputLabel,
     Stack,
     Divider,
     Avatar,
-    OutlinedInput,
-    Checkbox,
-    ListItemText,
     useTheme,
     useMediaQuery
 } from "@mui/material";
 import ConfidenceInfo from "../components/small/ConfidenceInfo";
 
-const confidenceOptions = ["Unknown", "Attempted", "Confident", "Avoid"];
-const difficultyOptions = ["Trivial", "VeryEasy", "Easy", "Medium", "Hard", "VeryHard", "Extreme"];
-const moduleTypeOptions = ["Regular", "Needy"];
-
-const fullConfidenceOptions = [
-    ...confidenceOptions.map((opt) => `Defuser:${opt}`),
-    ...confidenceOptions.map((opt) => `Expert:${opt}`),
-];
-
-const fullDifficultyOptions = [
-    ...difficultyOptions.map((opt) => `Defuser:${opt}`),
-    ...difficultyOptions.map((opt) => `Expert:${opt}`),
-];
 
 function UserAccount() {
     const theme = useTheme();
@@ -51,7 +31,6 @@ function UserAccount() {
         profileUser,
         profileError,
         localScores,
-        setLocalScores,
         modules,
         stats,
         refetchScores,

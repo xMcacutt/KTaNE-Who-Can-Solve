@@ -16,7 +16,9 @@ export default function useModuleCard({ module, user, authUser, score, setScores
         else if (type === "expert") newScore.expertConfidence = value;
         else if (type === "solo") newScore.canSolo = value;
 
-        setScores(prev => ({ ...prev, [module.module_id]: newScore }));
+        if (setScores) {
+            setScores(prev => ({ ...prev, [module.module_id]: newScore }));
+        }
 
         try {
             await axios.put(
@@ -36,7 +38,9 @@ export default function useModuleCard({ module, user, authUser, score, setScores
             queryClient.invalidateQueries(["missions"]);
         } catch (error) {
             console.error("Failed to update score:", error);
-            setScores(prev => ({ ...prev, [module.module_id]: prevScore }));
+            if (setScores) {
+                setScores(prev => ({ ...prev, [module.module_id]: prevScore }));
+            }
         }
     };
 

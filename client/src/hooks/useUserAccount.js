@@ -60,7 +60,9 @@ export function useUserAccount(profileId) {
   });
 
   useEffect(() => {
-    if (Array.isArray(fetchedScoresArray)) setLocalScores(normalizeScores(fetchedScoresArray));
+    if (Array.isArray(fetchedScoresArray)) {
+      setLocalScores(normalizeScores(fetchedScoresArray));
+    }
   }, [fetchedScoresArray]);
 
   const stats = useMemo(() => {
