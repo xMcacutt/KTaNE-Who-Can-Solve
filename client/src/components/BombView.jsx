@@ -8,6 +8,24 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
 
     if (!bomb.pools || bomb.pools.length === 0) return null;
 
+    const getModuleName = (moduleId) => {
+        const moduleData = modulesData[moduleId];
+        return moduleData?.name || moduleData?.module_id || moduleId || "";
+    };
+
+    const sortedPools = [...bomb.pools]
+        .map((pool) => ({
+            ...pool,
+            modules: [...(pool.modules || [])].sort((a, b) =>
+                getModuleName(a).localeCompare(getModuleName(b))
+            ),
+        }))
+        .sort((a, b) => {
+            const aFirst = getModuleName(a.modules?.[0]);
+            const bFirst = getModuleName(b.modules?.[0]);
+            return aFirst.localeCompare(bFirst);
+        });
+
     return (
         <Box mt={1} sx={{ width: "100%" }}>
             <Typography variant="subtitle1" gutterBottom>
@@ -16,7 +34,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
             </Typography>
 
 
-            {bomb.pools.map((pool, idx) => {
+            {sortedPools.map((pool, idx) => {
                 const hasDuplicates = new Set(pool.modules).size < pool.modules.length;
                 let renderedModules = [];
 
