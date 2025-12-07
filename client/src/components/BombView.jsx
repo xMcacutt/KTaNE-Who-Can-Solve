@@ -63,19 +63,6 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
 
                         const moduleData = modulesData[moduleId] || { module_id: moduleId };
 
-                        const defuser = users.find((u) => u.isDefuser);
-                        const experts = users.filter((u) => !u.isDefuser);
-
-                        const defuserConf =
-                            defuser?.scores?.find((s) => s.module_id === moduleData.module_id)
-                                ?.defuser_confidence || "Unknown";
-
-                        const expertConfs = experts.map(
-                            (e) =>
-                                e.scores?.find((s) => s.module_id === moduleData.module_id)
-                                    ?.expert_confidence || "Unknown"
-                        );
-
                         if (filter === "Only My Confident") {
                             if (!authUser) return false;
                             const currentUser = users.find(

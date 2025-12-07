@@ -5,8 +5,17 @@ import { useActiveUsers } from "../context/ActiveUsersContext";
 
 export function useMission() {
     const { missionName, users: usersParam } = useParams();
-    const { activeUsers, setActiveUsers, addUser, removeUser, setDefuser } = useActiveUsers();
+    const {
+        activeUsers,
+        setActiveUsers,
+        addUser,
+        removeUser,
+        setDefuser,
+        refreshActiveUserScores,
+        loadingUsers,
+    } = useActiveUsers();
     const [loaded, setLoaded] = useState(false);
+    const [usersReady, setUsersReady] = useState(false);
 
     const {
         data: mission,
@@ -83,62 +92,23 @@ export function useMission() {
         });
     }, [usersParam, activeUsers, setActiveUsers, loaded]);
 
-    async function refetchScores() {
-        try {
-            const ids = activeUsers
-                .map(u => u.id || u._id || u.user_id)
-                .filter(Boolean);
-
-            if (ids.length === 0) {
-                console.warn("refetchScores: no active users to refresh");
-                return;
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                await refreshActiveUserScores();
+            } finally {
+                if (!cancelled) setUsersReady(true);
             }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [refreshActiveUserScores, activeUsers.length]);
 
-            const newUsers = await Promise.all(
-                ids.map(async (id) => {
-                    const resUser = await fetch(`/api/users/${id}`);
-                    if (!resUser.ok) {
-                        console.warn(`refetchScores: failed to fetch user ${id}`);
-                        return null;
-                    }
-                    const userData = await resUser.json();
+    const refetchScores = refreshActiveUserScores;
 
-                    const resScores = await fetch(`/api/users/${id}/scores`);
-                    if (!resScores.ok) {
-                        console.warn(`refetchScores: failed to fetch scores for ${id}`);
-                        return { ...userData, scores: [] };
-                    }
-                    const scores = await resScores.json();
-                    return { ...userData, scores: Array.isArray(scores) ? scores : [], isDefuser: false };
-                })
-            );
-
-            const filtered = newUsers.filter(Boolean);
-
-            if (filtered.length > 0) {
-                const prevDefuserId = activeUsers.find(u => u.isDefuser)?.id;
-                const withDefuser = filtered.map(u => ({
-                    ...u,
-                    isDefuser: u.id === prevDefuserId
-                }));
-
-                if (!withDefuser.some(u => u.isDefuser) && withDefuser.length > 0) {
-                    withDefuser[0].isDefuser = true;
-                }
-
-                const stamped = withDefuser.map(u => ({ ...u, scoresUpdatedAt: Date.now() }));
-
-                setActiveUsers([...stamped]);
-            } else {
-                console.warn("refetchScores: no users returned from fetch");
-            }
-        } catch (err) {
-            console.error("refetchScores failed:", err);
-        }
-    }
-
-
-    const isLoading = missionLoading || modulesLoading;
+    const isLoading = missionLoading || modulesLoading || loadingUsers || !usersReady;
     const error = missionError || modulesError;
 
     return {

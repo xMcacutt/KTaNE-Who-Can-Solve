@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import UserCard from "./cards/UserCard";
 import UserCardMobile from "./cards/UserCardMobile";
 import { Virtuoso } from "react-virtuoso";
+import { useActiveUsers } from "../context/ActiveUsersContext";
 import {
     Box,
     Typography,
@@ -32,6 +33,23 @@ export function useDebounce(value, delay) {
 export default function UserList() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+    const { refreshActiveUserScores, loadingUsers } = useActiveUsers();
+    const [usersReady, setUsersReady] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                await refreshActiveUserScores();
+            } finally {
+                if (!cancelled) setUsersReady(true);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [refreshActiveUserScores]);
+
     let savedFilters = {};
     try {
         savedFilters = JSON.parse(localStorage.getItem("user_filters")) || {};
@@ -73,6 +91,7 @@ export default function UserList() {
         },
         keepPreviousData: true,
         staleTime: 1000 * 60 * 5,
+        enabled: usersReady && !loadingUsers,
     });
 
     return (
@@ -129,7 +148,7 @@ export default function UserList() {
                 </Stack>
             </Box>
             <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
-                {isLoading && (
+                {(isLoading || loadingUsers || !usersReady) && (
                     <Box display="flex" justifyContent="center" mt={4}>
                         <CircularProgress />
                     </Box>
@@ -141,7 +160,7 @@ export default function UserList() {
                     </Alert>
                 )}
 
-                {!isLoading && !error && users.length > 0 ? (
+                {!isLoading && !error && usersReady && !loadingUsers && users.length > 0 ? (
                     <Virtuoso
                         style={{
                             height: "97%",
@@ -179,7 +198,9 @@ export default function UserList() {
                     />
                 ) : (
                     !isLoading &&
-                    !error && (
+                    !error &&
+                    usersReady &&
+                    !loadingUsers && (
                         <Typography color="text.secondary">No users found.</Typography>
                     )
                 )}

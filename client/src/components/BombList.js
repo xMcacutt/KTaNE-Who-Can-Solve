@@ -57,7 +57,32 @@ export default function BombList() {
 
     const { authUser } = useAuth();
 
-    const { activeUsers, setActiveUsers, addUser, removeUser, setDefuser } = useActiveUsers();
+    const {
+        activeUsers,
+        setActiveUsers,
+        addUser,
+        removeUser,
+        setDefuser,
+        refreshActiveUserScores,
+        loadingUsers,
+    } = useActiveUsers();
+    const [usersReady, setUsersReady] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        (async () => {
+            try {
+                await refreshActiveUserScores();
+            } finally {
+                if (!cancelled) setUsersReady(true);
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [refreshActiveUserScores]);
 
     const teamKey = useMemo(() => {
         if (activeUsers.length === 1) {
@@ -72,6 +97,8 @@ export default function BombList() {
             isDefuser: u.isDefuser,
         }));
     }, [activeUsers]);
+
+    const canQuery = usersReady && !loadingUsers;
 
     const { data: missions = [], isLoading, error, refetch } = useQuery({
         queryKey: ["missions", debouncedSearchTerm, sort, order, teamKey, filters],
@@ -102,6 +129,7 @@ export default function BombList() {
             if (!res.ok) throw new Error("Failed to fetch missions");
             return res.json();
         },
+        enabled: canQuery,
     });
 
     const filteredMissions = React.useMemo(() => {
@@ -116,7 +144,7 @@ export default function BombList() {
             if (!res.ok) throw new Error("Failed to fetch scores");
             return res.json();
         },
-        enabled: !!authUser,
+        enabled: !!authUser && canQuery,
     });
 
     const Controls = (
@@ -227,7 +255,7 @@ export default function BombList() {
                 )}
             </Box>
             <Box sx={{ flexGrow: 1, overflow: "hidden" }}>
-                {isLoading && (
+                {(isLoading || loadingUsers || !usersReady) && (
                     <Box display="flex" justifyContent="center" mt={4}>
                         <CircularProgress />
                     </Box>
@@ -235,7 +263,7 @@ export default function BombList() {
 
                 {error && <Alert severity="error" sx={{ mb: 2 }}>{error.message}</Alert>}
 
-                {!isLoading && !error && filteredMissions.length > 0 ? (
+                {!isLoading && !error && usersReady && !loadingUsers && filteredMissions.length > 0 ? (
                     <Virtuoso
                         style={{
                             height: "97%",
@@ -261,7 +289,7 @@ export default function BombList() {
                         increaseViewportBy={200}
                     />
                 ) : (
-                    !isLoading && !error && (
+                    !isLoading && !error && usersReady && !loadingUsers && (
                         <Typography color="text.secondary">No missions found.</Typography>
                     )
                 )}
