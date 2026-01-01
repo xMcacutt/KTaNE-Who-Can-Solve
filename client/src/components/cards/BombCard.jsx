@@ -24,6 +24,7 @@ function BombCard({
         modulesData,
         formattedDate,
         totalModules,
+        totalWidgets,
         totalTime,
         sortedModuleIds,
         userModuleStats,

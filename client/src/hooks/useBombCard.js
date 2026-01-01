@@ -85,6 +85,7 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
         : "N/A";
 
     const totalModules = bombs.reduce((sum, bomb) => sum + (bomb.modules || 0), 0);
+    const totalWidgets = bombs.reduce((sum, bomb) => sum + (bomb.widgets || 0), 0);
     const totalTime = bombs.reduce((sum, bomb) => sum + (bomb.time || 0), 0);
 
     const sortedModuleIds = [...new Set(allModuleIds)]
@@ -166,6 +167,7 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
         modulesData,
         formattedDate,
         totalModules,
+        totalWidgets,
         totalTime,
         sortedModuleIds: paddedModuleIds,
         userModuleStats

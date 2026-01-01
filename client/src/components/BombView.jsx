@@ -29,8 +29,7 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
     return (
         <Box mt={1} sx={{ width: "100%" }}>
             <Typography variant="subtitle1" gutterBottom>
-                Modules: {bomb.modules} | Time: {formatTime(bomb.time)} | Strikes:{" "}
-                {bomb.strikes}
+                Modules: {bomb.modules} | Time: {formatTime(bomb.time)} | Strikes: {bomb.strikes} | Widgets: {bomb.widgets}
             </Typography>
 
 
