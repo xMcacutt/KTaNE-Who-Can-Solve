@@ -276,21 +276,7 @@ router.get("/", async (req, res) => {
     }
 });
 
-router.get("/:module_name", async (req, res) => {
-    try {
-        const { module_name } = req.params;
-        const result = await pool.query("SELECT * FROM modules WHERE name = $1", [module_name]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: "Module not found" });
-        }
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).send("Server error");
-    }
-});
-
-router.get("/popularity", async (req, res) => {
+router.get("/@popularity", async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT
@@ -314,6 +300,20 @@ router.get("/popularity", async (req, res) => {
     } catch (err) {
         console.error("Error fetching module popularity:", err);
         res.status(500).json({ message: "Server error" });
+    }
+});
+
+router.get("/:module_name", async (req, res) => {
+    try {
+        const { module_name } = req.params;
+        const result = await pool.query("SELECT * FROM modules WHERE name = $1", [module_name]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Module not found" });
+        }
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("Server error");
     }
 });
 
