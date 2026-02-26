@@ -290,6 +290,33 @@ router.get("/:module_name", async (req, res) => {
     }
 });
 
+router.get("/popularity", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT
+                m.module_id,
+                COALESCE(p.popularity, 0) AS popularity
+            FROM modules m
+            LEFT JOIN (
+                SELECT
+                    module_id,
+                    COUNT(*) FILTER (
+                        WHERE defuser_confidence = 'Confident'
+                           OR expert_confidence = 'Confident'
+                    ) AS popularity
+                FROM user_module_scores
+                GROUP BY module_id
+            ) p ON p.module_id = m.module_id
+            ORDER BY popularity DESC
+        `);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error fetching module popularity:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 router.post("/bulk", async (req, res) => {
     try {
         const ids = req.body?.ids;
