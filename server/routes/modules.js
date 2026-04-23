@@ -5,6 +5,7 @@ const router = express.Router();
 
 const confidenceOptions = ["Unknown", "Attempted", "Confident", "Avoid"];
 const difficultyOptions = ["Trivial", "VeryEasy", "Easy", "Medium", "Hard", "VeryHard", "Extreme"];
+const aiBlacklist = ["CruelMurder"]
 
 const SORT_FIELDS = {
     name: "name",
@@ -16,10 +17,14 @@ const SORT_FIELDS = {
 router.get("/all", async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT *
+            SELECT *, (module_id = ANY($1::text[])) AS is_blacklisted
             FROM modules
-            ORDER BY name ASC
-        `);
+            ORDER BY
+                CASE
+                    WHEN module_id = ANY($1::text[]) THEN 1 ELSE 0
+                END,
+                name
+        `, [aiBlacklist]);
 
         res.json(result.rows);
     } catch (err) {
@@ -50,8 +55,8 @@ router.get("/", async (req, res) => {
         const sortOrder = req.query.sortOrder?.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
         const conditions = [];
-        const params = [];
-        let idx = 1;
+        const params = [aiBlacklist];
+        let idx = 2;
 
         if (moduleTypes.length > 0) {
             params.push(moduleTypes);
@@ -222,19 +227,17 @@ router.get("/", async (req, res) => {
 
         const query = `
             WITH popularity AS(
-                    SELECT
-                    module_id,
+                SELECT module_id,
                     COUNT(*) FILTER(
                         WHERE defuser_confidence = 'Confident'
                            OR expert_confidence = 'Confident'
                     ) AS popularity
                 FROM user_module_scores
                 GROUP BY module_id
-                ),
+            ),
 
             difficulty_calc AS(
-                SELECT
-                            module_id,
+                SELECT module_id,
                 (
                     COALESCE(
                         array_position(
@@ -251,20 +254,24 @@ router.get("/", async (req, res) => {
                         999
                     )
                 ) AS difficulty_score
-                        FROM modules
+                FROM modules
             )
 
             SELECT
             m.*,
-                COALESCE(p.popularity, 0) AS popularity,
-                    d.difficulty_score
-                        FROM modules m
-                        LEFT JOIN popularity p ON p.module_id = m.module_id
-                        LEFT JOIN difficulty_calc d ON d.module_id = m.module_id
-                        ${whereClause}
-                        ORDER BY ${sortBy} ${sortOrder}, m.name ASC
-                        LIMIT ${limit}
-                        OFFSET ${offset}
+                COALESCE(p.popularity, 0) AS popularity, d.difficulty_score, (m.module_id = ANY($1::text[])) AS is_blacklisted
+                    FROM modules m
+                    LEFT JOIN popularity p ON p.module_id = m.module_id
+                    LEFT JOIN difficulty_calc d ON d.module_id = m.module_id
+                    ${whereClause}
+                    ORDER BY 
+                        CASE
+                            WHEN m.module_id = ANY($1::text[]) THEN 1 ELSE 0
+                        END ASC,
+                        ${sortBy} ${sortOrder} NULLS LAST, 
+                        m.name ASC
+                    LIMIT ${limit}
+                    OFFSET ${offset}
             `;
 
         const result = await pool.query(query, params);
@@ -284,17 +291,13 @@ router.get("/@popularity", async (req, res) => {
                 COALESCE(p.popularity, 0) AS popularity
             FROM modules m
             LEFT JOIN (
-                SELECT
-                    module_id,
-                    COUNT(*) FILTER (
-                        WHERE defuser_confidence = 'Confident'
-                           OR expert_confidence = 'Confident'
-                    ) AS popularity
-                FROM user_module_scores
-                GROUP BY module_id
             ) p ON p.module_id = m.module_id
-            ORDER BY popularity DESC
-        `);
+            ORDER BY 
+                CASE 
+                    WHEN m.module_id = ANY($1::text[]) THEN 1 ELSE 0 
+                END ASC,
+                popularity DESC
+        `, [aiBlacklist]);
 
         res.json(result.rows);
     } catch (err) {
@@ -306,7 +309,7 @@ router.get("/@popularity", async (req, res) => {
 router.get("/:module_name", async (req, res) => {
     try {
         const { module_name } = req.params;
-        const result = await pool.query("SELECT * FROM modules WHERE name = $1", [module_name]);
+        const result = await pool.query("SELECT *, (module_id = ANY($2::text[])) AS is_blacklisted FROM modules WHERE name = $1", [module_name, aiBlacklist]);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: "Module not found" });
         }
@@ -322,8 +325,12 @@ router.post("/bulk", async (req, res) => {
         const ids = req.body?.ids;
         if (!Array.isArray(ids) || ids.length === 0)
             return res.json([]);
-        const query = `SELECT * FROM modules WHERE module_id = ANY($1:: text[])`;
-        const result = await pool.query(query, [ids]); res.json(result.rows);
+        const result = await pool.query(`
+            SELECT *, (module_id = ANY($2::text[])) AS is_blacklisted 
+            FROM modules 
+            WHERE module_id = ANY($1::text[])
+        `, [ids, aiBlacklist]); 
+        res.json(result.rows);
     } catch (err) {
         console.error("Error fetching bulk modules:", err);
         res.status(500).json({ message: "Server error" });
