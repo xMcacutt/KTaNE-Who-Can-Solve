@@ -30,6 +30,59 @@ function parseDate(dateString) {
     return isNaN(date.getTime()) ? null : date;
 }
 
+async function removeMissing(packs) {
+    const keys = [];
+
+    for (const pack of packs) {
+        for (const mission of pack.missions || []) {
+            keys.push([mission.name, pack.name]);
+        }
+    }
+
+    if (keys.length === 0)
+        return;
+
+    const values = [];
+    const placeholders = keys.map(([mission, pack], i) => {
+        const index = i * 2;
+        values.push(mission, pack);
+        return `($${index + 1}, $${index + 2})`;
+    }).join(", ");
+
+    const query = `
+        DELETE FROM missions m
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM (VALUES ${placeholders}) AS v(mission_name, pack_name)
+            WHERE v.mission_name = m.mission_name
+            AND v.pack_name = m.pack_name            
+        );
+    `;
+
+    await pool.query(query, values);
+}
+
+async function ensureUnique() {
+    await pool.query(`
+        DELETE FROM missions a
+        USING missions b
+        WHERE a.id > b.id
+        AND a.mission_name = b.mission_name
+        AND a.pack_name = b.pack_name
+    `)
+
+    try {
+        await pool.query(`
+            ALTER TABLE missions
+            ADD CONSTRAINT unique_mission_pack
+            UNIQUE (mission_name, pack_name)
+        `);
+    } catch (err) {
+        if (err.code !== "42P07")
+            throw err;
+    }
+}
+
 async function insertMissions() {
     try {
         const packs = await loadJson();
@@ -41,6 +94,9 @@ async function insertMissions() {
         for (const query of alterQueries) {
             await pool.query(query);
         }
+
+        await ensureUnique();
+        await removeMissing(packs);
 
         const DIFFICULTY_MAP = {
             Trivial: 1,
