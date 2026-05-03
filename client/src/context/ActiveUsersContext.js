@@ -10,23 +10,7 @@ export function ActiveUsersProvider({ children }) {
     const activeUsersRef = useRef(activeUsers);
     const refreshCountRef = useRef(0);
 
-    useEffect(() => {
-        if (authUser == null) return;
-
-        try {
-            const stored = localStorage.getItem("activeUsers");
-            const parsed = stored ? JSON.parse(stored) : [];
-            setActiveUsers(Array.isArray(parsed) ? parsed : []);
-        } catch {
-            setActiveUsers([]);
-        }
-    }, [authUser]);
-
-    useEffect(() => {
-        activeUsersRef.current = activeUsers;
-    }, [activeUsers]);
-
-    const refreshActiveUserScores = useCallback(async () => {
+        const refreshActiveUserScores = useCallback(async () => {
         const usersToRefresh = activeUsersRef.current;
         if (usersToRefresh.length === 0) return;
         refreshCountRef.current += 1;
@@ -43,23 +27,25 @@ export function ActiveUsersProvider({ children }) {
                             fetch(`/api/users/${user.id}/scores`),
                         ]);
 
-                        if (!userRes.ok) {
-                            throw new Error(`Failed to fetch user ${user.id}`);
-                        }
-
                         const userData = await userRes.json();
                         const scores = scoresRes.ok ? await scoresRes.json() : [];
+                        const normalizedScores = (Array.isArray(scores) ? scores : []).map(s => ({
+                            module_id: s.module_id,
+                            defuserConfidence: s.defuser_confidence ?? s.defuserConfidence ?? "Unknown",
+                            expertConfidence: s.expert_confidence ?? s.expertConfidence ?? "Unknown",
+                            canSolo: !!(s.can_solo ?? s.canSolo),
+                        }));
 
                         return {
                             ...userData,
-                            scores: Array.isArray(scores) ? scores : [],
-                            isDefuser: prevDefuserId ? user.id === prevDefuserId : false,
+                            scores: normalizedScores,
+                            isDefuser: prevDefuserId ? String(user.id) === String(prevDefuserId) : false,
                         };
                     } catch (err) {
                         console.error("Failed to refresh user:", err);
                         return {
                             ...user,
-                            isDefuser: prevDefuserId ? user.id === prevDefuserId : user.isDefuser,
+                            isDefuser: prevDefuserId ? String(user.id) === String(prevDefuserId) : user.isDefuser,
                         };
                     }
                 })
@@ -76,6 +62,39 @@ export function ActiveUsersProvider({ children }) {
             setLoadingUsers(refreshCountRef.current > 0);
         }
     }, [setActiveUsers]);
+
+    useEffect(() => {
+        const handleFocus = () => {
+            if (activeUsersRef.current.length > 0) {
+                refreshActiveUserScores();
+            }
+        };
+
+        window.addEventListener("focus", handleFocus);
+        return () => window.removeEventListener("focus", handleFocus);
+    }, [refreshActiveUserScores]);
+
+    useEffect(() => {
+        if (authUser == null) return;
+
+        try {
+            const stored = localStorage.getItem("activeUsers");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                const validUsers = Array.isArray(parsed) ? parsed : [];
+                setActiveUsers(validUsers);
+                if (validUsers.length > 0) {
+                    refreshActiveUserScores();
+                }
+            }
+        } catch {
+            setActiveUsers([]);
+        }
+    }, [authUser, refreshActiveUserScores]);
+
+    useEffect(() => {
+        activeUsersRef.current = activeUsers;
+    }, [activeUsers]);
 
     useEffect(() => {
         if (authUser)

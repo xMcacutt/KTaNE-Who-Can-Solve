@@ -5,9 +5,7 @@ import {
     Typography,
     Box,
     Link,
-    Chip,
     Avatar,
-    Grid,
     useTheme,
     useMediaQuery,
     Tooltip,
@@ -56,18 +54,25 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
     const defuser = effectiveUsers.find(u => u.isDefuser) || null;
     const experts = effectiveUsers.filter(u => !u.isDefuser);
 
-    const defuserScores = Array.isArray(defuser?.scores)
-        ? defuser.scores.find(s => s.module_id === module.module_id)
-        : undefined;
-    const defuserConf = defuserScores?.defuser_confidence || "Unknown";
+    const getScoreForModule = (user) => {
+        if (!user?.scores) return {};
+        if (Array.isArray(user.scores)) {
+            return user.scores.find(s => s.module_id === module.module_id) || {};
+        }
+        return user.scores[module.module_id] || {};
+    };
+
+    const defuserScores = getScoreForModule(defuser);
+    const defuserConf = defuserScores?.defuserConfidence || "Unknown";
+
     const expertConfs = experts.map(e => {
-        const scores = Array.isArray(e.scores) ? e.scores : [];
-        return scores.find(s => s.module_id === module.module_id)?.expert_confidence || "Unknown";
+        const score = getScoreForModule(e);
+        return score?.expertConfidence || "Unknown";
     });
 
     let summaryIcon = confidenceIcons.Avoid;
     const anyExpertConfident = expertConfs.includes("Confident");
-    if (defuserScores?.can_solo)
+    if (defuserScores?.canSolo)
         summaryIcon = confidenceIcons.Solo
     else if
         (defuserConf === "Confident" && anyExpertConfident) summaryIcon = confidenceIcons.Confident;
@@ -193,7 +198,7 @@ function BombModuleCard({ module, probability, viewStyle, users, authUser }) {
                                 {effectiveUsers.map((user, i) => {
                                     const userScores = Array.isArray(user.scores) ? user.scores : [];
                                     const score = userScores.find(s => s.module_id === module.module_id) || {};
-                                    const conf = user.isDefuser ? score.defuser_confidence : score.expert_confidence;
+                                    const conf = user.isDefuser ? score.defuserConfidence : score.expertConfidence;
                                     var iconSrc =
                                         conf === "Confident"
                                             ? confidenceIcons.Confident

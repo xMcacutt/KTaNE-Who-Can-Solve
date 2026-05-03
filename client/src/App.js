@@ -65,7 +65,7 @@ function App() {
                                     }
                                 />
                                 <Route
-                                    path="missions/:missionName"
+                                    path="missions/:missionName/:users?"
                                     element={
                                         <Suspense fallback={<p>Loading mission...</p>}>
                                             <Mission />

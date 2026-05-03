@@ -29,13 +29,17 @@ export default function useModuleCard({ module, user, authUser, score, setScores
             if (refetchScores) refetchScores();
 
             setActiveUsers(prev =>
-                prev.map(u =>
-                    u.id === user.id
-                        ? { ...u, scores: { ...u.scores, [module.module_id]: newScore } }
-                        : u
-                )
+                prev.map(u => {
+                    if (String(u.id) !== String(user.id)) return u;
+                    const currentScores = Array.isArray(u.scores) ? u.scores : Object.values(u.scores || {});
+                    const exists = currentScores.find(s => s.module_id === module.module_id);
+                    const updatedScores = exists
+                        ? currentScores.map(s => s.module_id === module.module_id ? { ...s, ...newScore } : s)
+                        : [...currentScores, { module_id: module.module_id, ...newScore }];
+                    return { ...u, scores: updatedScores };
+                })
             );
-            queryClient.invalidateQueries(["missions"]);
+            queryClient.invalidateQueries(["scores"]);
         } catch (error) {
             console.error("Failed to update score:", error);
             if (setScores) {

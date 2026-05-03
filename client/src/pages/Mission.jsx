@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Chip, Tabs, Tab, Button, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import GroupAddIcon from "@mui/icons-material/GroupAdd";
 import { useMission } from "../hooks/useMission";
 import BombView from "../components/BombView";
 import UserPanel from "../components/small/UserPanel";
 import { useAuth } from "../context/AuthContext";
+import { useActiveUsers } from "../context/ActiveUsersContext";
 import BombConfDialog from '../components/small/BombConfDialog';
+import { encodeUsersParam } from '../utility';
 
 function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefuser, modulesData, refetchScores }) {
     const [tabIndex, setTabIndex] = useState(0);
@@ -152,17 +155,32 @@ function MissionPageContent({ mission, activeUsers, addUser, removeUser, setDefu
 }
 
 export default function MissionPage() {
+const navigate = useNavigate();
+const { missionName } = useParams();
+
     const {
         mission,
         modulesData,
         activeUsers,
-        addUser,
-        removeUser,
-        setDefuser,
-        refetchScores,
         isLoading,
         error,
     } = useMission();
+
+    const {
+        addUser,
+        removeUser,
+        setDefuser: setDefuserInContext,
+        refreshActiveUserScores,
+    } = useActiveUsers();
+
+    const setDefuser = (id) => {
+        setDefuserInContext(id);
+        const updated = activeUsers.map((u) => ({ ...u, isDefuser: u.id === id }));
+        navigate(
+            `/missions/${encodeURIComponent(missionName)}/${encodeUsersParam(updated)}`,
+            { replace: true }
+        );
+    };
 
     if (isLoading) return <p>Loading mission...</p>;
     if (error) return <p>Error: {error.message}</p>;
@@ -175,7 +193,7 @@ export default function MissionPage() {
             removeUser={removeUser}
             setDefuser={setDefuser}
             modulesData={modulesData}
-            refetchScores={refetchScores}
+            refetchScores={refreshActiveUserScores}
         />
     );
 }

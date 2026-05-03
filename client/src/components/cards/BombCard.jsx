@@ -6,7 +6,6 @@ import { formatTime } from "../../utility";
 import { truncate } from "../../utility";
 import ModuleIcon from "../small/ModuleIcon";
 import useBombCard from "../../hooks/useBombCard";
-import { Link as RouterLink } from "react-router-dom";
 import { ReactComponent as BombIcon } from '../../assets/Bomb.svg';
 
 function BombCard({
@@ -17,7 +16,8 @@ function BombCard({
     authUser,
 }) {
     const {
-        missionPageUrl,
+        getMissionUrl,
+        handleMissionNavigate,
         isFavourite,
         handleFavouriteSet,
         isLoading,
@@ -88,8 +88,12 @@ function BombCard({
                         }}
                     >
                         <Box ml={2}>
-
-                            <Link component={RouterLink} to={missionPageUrl} underline="hover">
+                            <Link
+                                component="a"
+                                href={getMissionUrl()}
+                                onClick={(e) => { e.preventDefault(); handleMissionNavigate(); }}
+                                underline="hover"
+                            >
                                 <Typography variant="bebas" fontSize="1.5rem" noWrap sx={{ cursor: "pointer" }}>
                                     {mission.mission_name}
                                 </Typography>

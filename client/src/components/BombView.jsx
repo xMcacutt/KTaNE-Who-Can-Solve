@@ -62,43 +62,32 @@ function BombView({ bomb, viewStyle, filter, users, modulesData, authUser }) {
 
                         const moduleData = modulesData[moduleId] || { module_id: moduleId };
 
-                        if (filter === "Only My Confident") {
-                            if (!authUser) return false;
-                            const currentUser = users.find(
-                                (u) =>
-                                    u.id === authUser.id ||
-                                    u._id === authUser.id ||
-                                    u.user_id === authUser.id
-                            );
-                            if (!currentUser || !Array.isArray(currentUser.scores)) return false;
+                        const currentUser = users.find(
+                            (u) => String(u.id) === String(authUser.id) || 
+                                String(u._id) === String(authUser.id) || 
+                                String(u.user_id) === String(authUser.id)
+                        );
 
-                            const score = currentUser.scores.find(
-                                (s) => s.module_id === moduleData.module_id
-                            );
-
-                            if (!score) return false;
-
-                            if (users.isDefuser) return score.defuser_confidence === "Confident";
-                            else return score.expert_confidence === "Confident";
+                        if (!currentUser || !Array.isArray(currentUser.scores)) {
+                            return filter === "Only My Unknown";
                         }
+
+                        const score = currentUser.scores.find(
+                            (s) => s.module_id === moduleData.module_id
+                        );
+
+                        if (filter === "Only My Confident") {
+                            if (!score) return false;
+                            return currentUser.isDefuser 
+                                ? score.defuser_confidence === "Confident" 
+                                : score.expert_confidence === "Confident";
+                        }
+
                         if (filter === "Only My Unknown") {
-                            if (!authUser) return false;
-                            const currentUser = users.find(
-                                (u) =>
-                                    u.id === authUser.id ||
-                                    u._id === authUser.id ||
-                                    u.user_id === authUser.id
-                            );
-                            if (!currentUser || !Array.isArray(currentUser.scores)) return false;
-
-                            const score = currentUser.scores.find(
-                                (s) => s.module_id === moduleData.module_id
-                            );
-
                             if (!score) return true;
-
-                            if (users.isDefuser) return score.defuser_confidence !== "Confident";
-                            else return score.expert_confidence !== "Confident";
+                            return currentUser.isDefuser 
+                                ? score.defuser_confidence !== "Confident" 
+                                : score.expert_confidence !== "Confident";
                         }
                         return true;
                     })

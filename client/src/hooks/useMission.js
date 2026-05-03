@@ -1,21 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useActiveUsers } from "../context/ActiveUsersContext";
+import { decodeUsersParam, encodeUsersParam } from "../utility";
 
 export function useMission() {
     const { missionName, users: usersParam } = useParams();
-    const {
-        activeUsers,
-        setActiveUsers,
-        addUser,
-        removeUser,
-        setDefuser,
-        refreshActiveUserScores,
-        loadingUsers,
-    } = useActiveUsers();
-    const [loaded, setLoaded] = useState(false);
-    const [usersReady, setUsersReady] = useState(false);
+    const urlUsers = decodeUsersParam(usersParam);
 
     const {
         data: mission,
@@ -38,18 +29,14 @@ export function useMission() {
     const {
         data: modulesData = {},
         isLoading: modulesLoading,
-        error: modulesError
     } = useQuery({
         queryKey: ['modules', missionName],
         queryFn: async () => {
-            if (!allModuleIds.length) {
+            if (!allModuleIds.length)
                 return {};
-            }
             const res = await fetch('/api/modules/bulk', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids: allModuleIds }),
             });
             if (!res.ok) {
@@ -58,11 +45,7 @@ export function useMission() {
             }
             const data = await res.json();
             const dict = {};
-            data.forEach((m) => {
-                if (m.module_id) {
-                    dict[m.module_id] = m;
-                }
-            });
+            data.forEach((m) => { if (m.module_id) { dict[m.module_id] = m;} });
             return dict;
         },
         enabled: !!mission && allModuleIds.length > 0,
@@ -70,56 +53,67 @@ export function useMission() {
         keepPreviousData: true,
     });
 
-    useEffect(() => {
-        if (loaded || activeUsers.length > 0 || !usersParam) return;
-        setLoaded(true);
-        const ids = usersParam.split(',');
-        Promise.all(ids.map(async (id) => {
-            const resUser = await fetch(`/api/users/${id}`);
-            if (!resUser.ok) throw new Error(`Failed to fetch user ${id}`);
-            const userData = await resUser.json();
-            const resScores = await fetch(`/api/users/${id}/scores`);
-            if (!resScores.ok) throw new Error(`Failed to fetch scores for ${id}`);
-            const scores = await resScores.json();
-            return { ...userData, scores: Array.isArray(scores) ? scores : [], isDefuser: false };
-        })).then((newUsers) => {
-            if (newUsers.length > 0) {
-                newUsers[0].isDefuser = true;
-            }
-            setActiveUsers(newUsers);
-        }).catch((err) => {
-            console.error('Error loading users from params:', err);
-        });
-    }, [usersParam, activeUsers, setActiveUsers, loaded]);
+    const {
+        data: activeUsers = [],
+        isLoading: usersLoading,
+    } = useQuery({
+        queryKey: ['missionUsers', usersParam],
+        queryFn: async () => {
+            if (!urlUsers.length) return [];
+
+            const fetched = await Promise.all(
+                urlUsers.map(async ({ id, isDefuser }) => {
+                    const [userRes, scoresRes] = await Promise.all([
+                        fetch(`/api/users/${id}`),
+                        fetch(`/api/users/${id}/scores`),
+                    ]);
+                    if (!userRes.ok) throw new Error(`Failed to fetch user ${id}`);
+                    const userData = await userRes.json();
+                    const scores = scoresRes.ok ? await scoresRes.json() : [];
+                    const normalizedScores = (Array.isArray(scores) ? scores : []).map(s => ({
+                        module_id: s.module_id,
+                        defuserConfidence: s.defuser_confidence ?? s.defuserConfidence ?? "Unknown",
+                        expertConfidence: s.expert_confidence ?? s.expertConfidence ?? "Unknown",
+                        canSolo: !!(s.can_solo ?? s.canSolo),
+                    }));
+                    return {
+                        ...userData,
+                        scores: normalizedScores,
+                        isDefuser,
+                    };
+                })
+            );
+
+            const hasDefuser = fetched.some((u) => u.isDefuser);
+            return hasDefuser
+                ? fetched
+                : fetched.map((u, i) => ({ ...u, isDefuser: i === 0 }));
+        },
+        enabled: urlUsers.length > 0,
+        staleTime: 1000 * 60 * 5,
+    });
+
+    const queryClient = useQueryClient();
 
     useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                await refreshActiveUserScores();
-            } finally {
-                if (!cancelled) setUsersReady(true);
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === "visible" && urlUsers.length > 0) {
+                queryClient.invalidateQueries({ queryKey: ['missionUsers', usersParam] });
             }
-        })();
-        return () => {
-            cancelled = true;
         };
-    }, [refreshActiveUserScores, activeUsers.length]);
 
-    const refetchScores = refreshActiveUserScores;
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    }, [queryClient, usersParam, urlUsers.length]);
 
-    const isLoading = missionLoading || modulesLoading || loadingUsers || !usersReady;
-    const error = missionError || modulesError;
+    const isLoading = missionLoading || modulesLoading || usersLoading;
+    const error = missionError;
 
     return {
         mission,
-        modulesData,
+        modulesData: isLoading ? {} : modulesData,
         activeUsers,
-        addUser,
-        removeUser,
-        setDefuser,
-        refetchScores,
         isLoading,
-        error
+        error,
     };
 }

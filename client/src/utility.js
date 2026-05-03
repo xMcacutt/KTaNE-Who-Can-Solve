@@ -50,3 +50,17 @@ export const truncate = (str, n) => {
         return str;
     return str.length > n ? str.substr(0, n - 1) + "..." : str;
 };
+
+export function encodeUsersParam(users) {
+    return users
+        .map((u) => (u.isDefuser ? `${u.id}:defuser` : String(u.id)))
+        .join(",");
+}
+
+export function decodeUsersParam(param) {
+    if (!param) return [];
+    return param.split(",").map((segment) => {
+        const [id, flag] = segment.split(":");
+        return { id, isDefuser: flag === "defuser" };
+    });
+}

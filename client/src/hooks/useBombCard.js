@@ -1,14 +1,25 @@
 
 import axios from "axios";
-import { difficultyMap } from "../utility";
+import { difficultyMap, encodeUsersParam } from "../utility";
 import React, { useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useActiveUsers } from '../context/ActiveUsersContext'
+import { useNavigate } from "react-router-dom";
 
 function useBombCard(mission, users, onFavouriteChanged, authUser) {
-    const missionPageUrl = {
-        pathname: `/missions/${encodeURIComponent(mission.mission_name)}`,
-        state: { mission, users },
+    const navigate = useNavigate();
+    const { activeUsers } = useActiveUsers();
+
+    const getMissionUrl = () => {
+        const base = `/missions/${encodeURIComponent(mission.mission_name)}`;
+        if (!activeUsers.length) return base;
+        return `${base}/${encodeUsersParam(activeUsers)}`;
     };
+
+    const handleMissionNavigate = () => {
+        navigate(getMissionUrl());
+    };
+
     const [isFavourite, setIsFavourite] = useState(mission.is_favourite);
 
     useEffect(() => {
@@ -160,7 +171,8 @@ function useBombCard(mission, users, onFavouriteChanged, authUser) {
 
     return {
         bombs,
-        missionPageUrl,
+        getMissionUrl,
+        handleMissionNavigate,
         isFavourite,
         handleFavouriteSet,
         isLoading,
